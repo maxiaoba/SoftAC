@@ -68,7 +68,8 @@ class GaussianPolicy(NNPolicy, Serializable):
         # TODO: should always return same shape out
         # Figure out how to make the interface for `log_pis` cleaner
         if with_log_pis:
-            # TODO.code_consolidation: should come from log_pis_for
+            # TODO.code_consolidation: should come from log_pis_for 
+            # Xiaobai: accoording to TODO, this is a bug?
             log_pis = distribution.log_p_t
             if self._squash:
                 log_pis -= self._squash_correction(raw_actions)

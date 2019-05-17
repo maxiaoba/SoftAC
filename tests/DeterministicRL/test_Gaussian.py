@@ -20,7 +20,7 @@ from sac.preprocessors import MLPPreprocessor
 from examples.variants import parse_domain_and_task, get_variants
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--exp_name', type=str, default='RealNVP')
+parser.add_argument('--exp_name', type=str, default='Gaussian')
 parser.add_argument('--mode', type=str, default='local')
 parser.add_argument('--log_dir', type=str, default='Data')
 parser.add_argument('--args_data', type=str, default=None)
@@ -47,14 +47,10 @@ logger.set_log_tabular_only(False)
 logger.push_prefix("[%s] " % args.exp_name)
 
 policy_params = {
-    'preprocessing_hidden_sizes': (256, 256, 4),
-    's_t_units': 2, # num of units of the realNVP inner mlp
-    'coupling_layers': 2,
-    's_t_layers': 1, # num of layers of the realNVP inner mlp
-    'action_prior': 'uniform', # this is a prior for action distribution, not latent distribution
-    'preprocessing_output_nonlinearity': 'relu',
+    'reg': 1e-3,
+    'action_prior': 'uniform',
     'reparameterize': True,
-    'squash': False, # Ture to add tanh on the output
+    'squash': False,
 }
 value_fn_params = {'layer_size': 256}
 algorithm_params = {    
@@ -98,38 +94,13 @@ vf = NNVFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
 initial_exploration_policy = UniformPolicy(env_spec=env.spec)
 
 
-nonlinearity = {
-    None: None,
-    'relu': tf.nn.relu,
-    'tanh': tf.nn.tanh
-}[policy_params['preprocessing_output_nonlinearity']]
-
-preprocessing_hidden_sizes = policy_params.get('preprocessing_hidden_sizes')
-if preprocessing_hidden_sizes is not None:
-    observations_preprocessor = MLPPreprocessor(
+policy = GaussianPolicy(
         env_spec=env.spec,
-        layer_sizes=preprocessing_hidden_sizes,
-        output_nonlinearity=nonlinearity)
-else:
-    observations_preprocessor = None
-
-policy_s_t_layers = policy_params['s_t_layers']
-policy_s_t_units = policy_params['s_t_units']
-s_t_hidden_sizes = [policy_s_t_units] * policy_s_t_layers
-
-bijector_config = {
-    'num_coupling_layers': policy_params['coupling_layers'],
-    'translation_hidden_sizes': s_t_hidden_sizes,
-    'scale_hidden_sizes': s_t_hidden_sizes,
-}
-
-policy = LatentSpacePolicy(
-    env_spec=env.spec,
-    squash=policy_params['squash'],
-    bijector_config=bijector_config,
-    reparameterize=policy_params['reparameterize'],
-    q_function=qf1,
-    observations_preprocessor=observations_preprocessor)
+        hidden_layer_sizes=(M,M),
+        reparameterize=policy_params['reparameterize'],
+        reg=policy_params['reg'],
+        squash=policy_params['squash'],
+)
 
 algorithm = SAC(
     base_kwargs=base_kwargs,

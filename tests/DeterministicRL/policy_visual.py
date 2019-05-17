@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 with tf.Session() as sess:
 	sample_num = 1000
 	log_dir = './Data/RealNVP'
-	itr = 50
+	itr = 100
 	data_path = log_dir+'/itr_'+str(itr)+'.pkl'
 	data = joblib.load(data_path)
 	env = data['env']
