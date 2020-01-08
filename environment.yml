@@ -7,27 +7,29 @@ channels:
     - jjhelmus
     - soumith
 dependencies:
-    - python==3.5.2
-    - numpy==1.13.0
-    - scipy
-    - path.py
-    - python-dateutil
-    - joblib==0.10.3
+    - python==3.6.6#==3.5.2
+    # - numpy==1.13.0
+    # - scipy
+    # - path.py
+    # - python-dateutil
+    # - joblib==0.10.3
     - mako
-    - ipywidgets
-    - numba
-    - flask
-    - pybox2d
-    - pygame
-    - h5py
-    - matplotlib
-    - opencv3=3.1.0
+    # - ipywidgets
+    # - numba
+    # - flask
+    # - pybox2d
+    # - pygame
+    # - h5py
+    # - matplotlib
+    # - opencv3==3.1.0
     - scikit-learn
-    - mpi4py
-    - pytorch==0.1.9
-    - torchvision==0.1.6
+    # - mpi4py
+    # - pytorch==0.1.9
+    # - torchvision==0.1.6
     - pandas
     - pip:
+        # - numpy==1.13.0
+        - numpy
         - Pillow
         - atari-py
         - pyprind
@@ -38,10 +40,10 @@ dependencies:
         - pyzmq
         - tqdm
         - msgpack-python
-        - mujoco_py==0.5.7
+        # - mujoco_py==0.5.7
         - cached_property
         - line_profiler
-        - cloudpickle
+        # - cloudpickle
         - Cython
         - redis
         - git+https://github.com/Theano/Theano.git@adfe319ce6b781083d8dc3200fb4481b00853791#egg=Theano
@@ -62,3 +64,5 @@ dependencies:
         - hyperopt
         - polling
         - gtimer
+        - path
+        - six
