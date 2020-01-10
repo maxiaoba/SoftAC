@@ -8,12 +8,11 @@ from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import VariantGenerator
 from rllab import config
 
-from sac.algos import SAC
+from sac.algos.flowq import FlowQ
 
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp, unflatten
-from sac.policies import UniformPolicy
-from sac.policies.latent_space_policy_0 import LatentSpacePolicy
+from sac.policies import GaussianPolicy, LatentSpacePolicy, GMMPolicy, UniformPolicy
 from sac.misc.sampler import SimpleSampler
 from sac.replay_buffers import SimpleReplayBuffer
 from sac.value_functions import NNQFunction, NNVFunction
@@ -22,7 +21,7 @@ from examples.variants import parse_domain_and_task, get_variants
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--exp_name', type=str, default='Hopper')
-parser.add_argument('--log_dir', type=str, default='SAC_LSP')
+parser.add_argument('--log_dir', type=str, default='FlowQ_LSP')
 parser.add_argument('--epoch', type=int, default=3000)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--args_data', type=str, default=None)
@@ -55,7 +54,7 @@ logger.set_log_tabular_only(False)
 logger.push_prefix("[%s] " % args.exp_name)
 
 import json
-with open('sac_lsp_variant.json','r') as in_json:
+with open('flowq_lsp_variant.json','r') as in_json:
     variants = json.load(in_json)
     variants['seed'] = seed
     variants["algorithm_params"]["base_kwargs"]["n_epochs"] = args.epoch+1
@@ -121,7 +120,7 @@ policy = LatentSpacePolicy(
     q_function=qf1,
     observations_preprocessor=observations_preprocessor)
 
-algorithm = SAC(
+algorithm = FlowQ(
     base_kwargs=base_kwargs,
     env=env,
     policy=policy,

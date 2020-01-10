@@ -54,7 +54,7 @@ logger.set_log_tabular_only(False)
 logger.push_prefix("[%s] " % args.exp_name)
 
 import json
-with open('sac_gaussian_variant.json','r') as in_json:
+with open('flowq_gaussian_variant.json','r') as in_json:
     variants = json.load(in_json)
     variants['seed'] = seed
     variants["algorithm_params"]["base_kwargs"]["n_epochs"] = args.epoch+1
@@ -72,7 +72,7 @@ from sac.envs.rllab_env import RLLabEnv
 import pybullet_envs
 import gym
 env = normalize(RLLabEnv(gym.make(args.exp_name+'BulletEnv-v0')))
-env.seed(0)
+env._wrapped_env.seed(0)
 
 pool = SimpleReplayBuffer(env_spec=env.spec, **replay_buffer_params)
 

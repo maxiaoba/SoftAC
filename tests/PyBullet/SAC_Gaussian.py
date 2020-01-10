@@ -12,7 +12,8 @@ from sac.algos import SAC
 
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp, unflatten
-from sac.policies import GaussianPolicy, LatentSpacePolicy, GMMPolicy, UniformPolicy
+from sac.policies import UniformPolicy
+from sac.policies.gaussian_policy_0 import GaussianPolicy
 from sac.misc.sampler import SimpleSampler
 from sac.replay_buffers import SimpleReplayBuffer
 from sac.value_functions import NNQFunction, NNVFunction
@@ -72,7 +73,7 @@ from sac.envs.rllab_env import RLLabEnv
 import pybullet_envs
 import gym
 env = normalize(RLLabEnv(gym.make(args.exp_name+'BulletEnv-v0')))
-env.seed(0)
+env._wrapped_env.seed(0)
 
 pool = SimpleReplayBuffer(env_spec=env.spec, **replay_buffer_params)
 
