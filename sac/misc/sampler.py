@@ -102,8 +102,10 @@ class Sampler(object):
 
 
 class SimpleSampler(Sampler):
-    def __init__(self, **kwargs):
+    def __init__(self, with_raw_action=False, **kwargs):
         super(SimpleSampler, self).__init__(**kwargs)
+
+        self._with_raw_action = with_raw_action
 
         self._path_length = 0
         self._path_return = 0
@@ -117,18 +119,31 @@ class SimpleSampler(Sampler):
         if self._current_observation is None:
             self._current_observation = self.env.reset()
 
-        action, _ = self.policy.get_action(self._current_observation)
+        if self._with_raw_action:
+            action, raw_action, _ = self.policy.get_action(self._current_observation,
+                                                with_raw_action=True)
+        else:
+            action, _ = self.policy.get_action(self._current_observation)
         next_observation, reward, terminal, info = self.env.step(action)
         self._path_length += 1
         self._path_return += reward
         self._total_samples += 1
 
-        self.pool.add_sample(
-            observation=self._current_observation,
-            action=action,
-            reward=reward,
-            terminal=terminal,
-            next_observation=next_observation)
+        if self._with_raw_action:
+            self.pool.add_sample(
+                observation=self._current_observation,
+                action=action,
+                raw_action=raw_action,
+                reward=reward,
+                terminal=terminal,
+                next_observation=next_observation)
+        else:
+            self.pool.add_sample(
+                observation=self._current_observation,
+                action=action,
+                reward=reward,
+                terminal=terminal,
+                next_observation=next_observation)
 
         if terminal or self._path_length >= self._max_path_length:
             self.policy.reset()

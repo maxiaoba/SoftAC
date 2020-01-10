@@ -6,7 +6,7 @@ from .replay_buffer import ReplayBuffer
 
 
 class SimpleReplayBuffer(ReplayBuffer, Serializable):
-    def __init__(self, env_spec, max_replay_buffer_size):
+    def __init__(self, env_spec, max_replay_buffer_size, with_raw_action=False):
         super(SimpleReplayBuffer, self).__init__()
         Serializable.quick_init(self, locals())
 
@@ -18,12 +18,15 @@ class SimpleReplayBuffer(ReplayBuffer, Serializable):
         self._max_buffer_size = max_replay_buffer_size
         self._observations = np.zeros((max_replay_buffer_size,
                                        self._observation_dim))
+        self._with_raw_action = with_raw_action
         # It's a bit memory inefficient to save the observations twice,
         # but it makes the code *much* easier since you no longer have to
         # worry about termination conditions.
         self._next_obs = np.zeros((max_replay_buffer_size,
                                    self._observation_dim))
         self._actions = np.zeros((max_replay_buffer_size, self._action_dim))
+        if self._with_raw_action:
+            self._raw_actions = np.zeros((max_replay_buffer_size, self._action_dim))
         self._rewards = np.zeros(max_replay_buffer_size)
         # self._terminals[i] = a terminal was received at time i
         self._terminals = np.zeros(max_replay_buffer_size, dtype='uint8')
@@ -37,6 +40,8 @@ class SimpleReplayBuffer(ReplayBuffer, Serializable):
         self._rewards[self._top] = reward
         self._terminals[self._top] = terminal
         self._next_obs[self._top] = next_observation
+        if self._with_raw_action:
+            self._raw_actions[self._top] = kwargs['raw_action']
 
         self._advance()
 
@@ -50,13 +55,16 @@ class SimpleReplayBuffer(ReplayBuffer, Serializable):
 
     def random_batch(self, batch_size):
         indices = np.random.randint(0, self._size, batch_size)
-        return dict(
+        batch =  dict(
             observations=self._observations[indices],
             actions=self._actions[indices],
             rewards=self._rewards[indices],
             terminals=self._terminals[indices],
             next_observations=self._next_obs[indices],
         )
+        if self._with_raw_action:
+            batch['raw_actions'] = self._raw_actions[indices]
+        return batch
 
     @property
     def size(self):
@@ -64,15 +72,27 @@ class SimpleReplayBuffer(ReplayBuffer, Serializable):
 
     def __getstate__(self):
         d = super(SimpleReplayBuffer, self).__getstate__()
-        d.update(dict(
-            o=self._observations.tobytes(),
-            a=self._actions.tobytes(),
-            r=self._rewards.tobytes(),
-            t=self._terminals.tobytes(),
-            no=self._next_obs.tobytes(),
-            top=self._top,
-            size=self._size,
-        ))
+        if self._with_raw_action:
+            d.update(dict(
+                o=self._observations.tobytes(),
+                a=self._actions.tobytes(),
+                ra=self._raw_actions.tobytes(),
+                r=self._rewards.tobytes(),
+                t=self._terminals.tobytes(),
+                no=self._next_obs.tobytes(),
+                top=self._top,
+                size=self._size,
+            ))
+        else:
+            d.update(dict(
+                o=self._observations.tobytes(),
+                a=self._actions.tobytes(),
+                r=self._rewards.tobytes(),
+                t=self._terminals.tobytes(),
+                no=self._next_obs.tobytes(),
+                top=self._top,
+                size=self._size,
+            ))
         return d
 
     def __setstate__(self, d):

@@ -76,13 +76,9 @@ class GaussianPolicy(NNPolicy, Serializable):
 
         return actions
     
-    def log_pis_for(self, observations, actions,
+    def log_pis_for(self, observations, raw_actions,
                     name=None, reuse=tf.AUTO_REUSE):
         name = name or self.name
-        if self._squash:
-            raw_actions = tf.atanh(actions)
-        else:
-            raw_actions = actions
 
         with tf.variable_scope(name, reuse=reuse):
             distribution = Normal(
@@ -105,10 +101,10 @@ class GaussianPolicy(NNPolicy, Serializable):
             shape=(None, self._Ds),
             name='observations',
         )
-        self._actions_ph = tf.placeholder(
+        self._raw_actions_ph = tf.placeholder(
             dtype=tf.float32,
             shape=(None, self._Da),
-            name='actions',
+            name='raw_actions',
         )
 
         with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
@@ -120,12 +116,12 @@ class GaussianPolicy(NNPolicy, Serializable):
                 reg=self._reg,
             )
 
-        raw_actions = tf.stop_gradient(self.distribution.x_t)
-        self._actions = tf.tanh(raw_actions) if self._squash else raw_actions
-        self._log_pis = self.log_pis_for(self._observations_ph,self._actions_ph)
+        self._raw_actions = tf.stop_gradient(self.distribution.x_t)
+        self._actions = tf.tanh(self._raw_actions) if self._squash else self._raw_actions
+        self._log_pis = self.log_pis_for(self._observations_ph,self._raw_actions_ph)
 
     @overrides
-    def get_actions(self, observations):
+    def get_actions(self, observations, with_raw_actions=False):
         """Sample actions based on the observations.
 
         If `self._is_deterministic` is True, returns the mean action for the 
@@ -143,11 +139,12 @@ class GaussianPolicy(NNPolicy, Serializable):
             mu = tf.get_default_session().run(
                 self.distribution.mu_t, feed_dict)  # 1 x Da
             if self._squash:
-                mu = np.tanh(mu)
+                if with_raw_actions:
+                    return np.tanh(mu), mu
+                else:
+                    return np.tanh(mu)
 
-            return mu
-
-        return super(GaussianPolicy, self).get_actions(observations)
+        return super(GaussianPolicy, self).get_actions(observations, with_raw_actions)
 
     def _squash_correction(self, actions):
         if not self._squash: return 0

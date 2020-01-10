@@ -88,9 +88,9 @@ sampler_params = {
 from cartpole import CartPoleEnv
 env = CartPoleEnv()
 
-pool = SimpleReplayBuffer(env_spec=env.spec, **replay_buffer_params)
+pool = SimpleReplayBuffer(env_spec=env.spec, with_raw_action=True, **replay_buffer_params)
 
-sampler = SimpleSampler(**sampler_params)
+sampler = SimpleSampler(with_raw_action=True, **sampler_params)
 
 base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 

@@ -91,9 +91,9 @@ sampler_params = {
 from cartpole import CartPoleEnv
 env = CartPoleEnv()
 
-pool = SimpleReplayBuffer(env_spec=env.spec, **replay_buffer_params)
+pool = SimpleReplayBuffer(env_spec=env.spec, with_raw_action=True, **replay_buffer_params)
 
-sampler = SimpleSampler(**sampler_params)
+sampler = SimpleSampler(with_raw_action=True, **sampler_params)
 
 base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
@@ -131,7 +131,7 @@ bijector_config = {
     'scale_hidden_sizes': s_t_hidden_sizes,
 }
 
-from sac.policies.latent_space_policy_0 import LatentSpacePolicy
+from sac.policies.latent_space_policy import LatentSpacePolicy
 policy = LatentSpacePolicy(
     env_spec=env.spec,
     squash=policy_params['squash'],

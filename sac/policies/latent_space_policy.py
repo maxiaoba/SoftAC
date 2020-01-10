@@ -114,14 +114,10 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
         return log_pis
 
-    def log_pis_for(self, observations, actions, name=None,
+    def log_pis_for(self, observations, raw_actions, name=None,
                     reuse=tf.AUTO_REUSE):
         name = name or self.name
 
-        if self._squash:
-            raw_actions = tf.atanh(actions)
-        else:
-            raw_actions = actions
         with tf.variable_scope(name, reuse=reuse):
             conditions = (
                 self._observations_preprocessor.get_output_for(
@@ -168,19 +164,19 @@ class LatentSpacePolicy(NNPolicy, Serializable):
             name='latents',
         )
 
-        self._actions_ph = tf.placeholder(
+        self._raw_actions_ph = tf.placeholder(
             dtype=tf.float32,
             shape=(None, self._Da),
-            name='actions_policy',
+            name='raw_actions',
         )
 
         self._raw_actions, self._actions, self._log_p_t = self.actions_for(
             self._observations_ph, with_log_pis=True, with_raw_actions=True)
         self._determistic_actions = self.actions_for(self._observations_ph,
                                                      self._latents_ph)
-        self._log_pis = self.log_pis_for(self._observations_ph,self._actions_ph)
+        self._log_pis = self.log_pis_for(self._observations_ph,self._raw_actions_ph)
 
-    def get_action(self, observation):
+    def get_action(self, observation, with_raw_action=False):
         """Sample single action based on the observations.
         """
 
@@ -192,9 +188,13 @@ class LatentSpacePolicy(NNPolicy, Serializable):
             best_action_index = np.argmax(q_values)
 
             return action_candidates[best_action_index], {}
-        return self.get_actions(observation[None])[0], {}
+        if with_raw_action:
+            actions, raw_actions = self.get_actions(observation[None],True)
+            return actions[0], raw_actions[0], {}
+        else:
+            return self.get_actions(observation[None])[0], {}
 
-    def get_actions(self, observations):
+    def get_actions(self, observations, with_raw_actions=False):
         """Sample batch of actions based on the observations"""
 
         feed_dict = { self._observations_ph: observations }
@@ -207,8 +207,13 @@ class LatentSpacePolicy(NNPolicy, Serializable):
                 self._determistic_actions,
                 feed_dict=feed_dict)
         else:
-            actions = tf.get_default_session().run(
-                self._actions, feed_dict=feed_dict)
+            if with_raw_actions:
+                actions, raw_actions = tf.get_default_session().run(
+                    [self._actions, self._raw_actions], feed_dict=feed_dict)
+                return actions, raw_actions
+            else:
+                actions = tf.get_default_session().run(
+                    self._actions, feed_dict=feed_dict)
 
         return actions
 

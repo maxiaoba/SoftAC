@@ -74,9 +74,9 @@ import gym
 env = normalize(RLLabEnv(gym.make(args.exp_name+'BulletEnv-v0')))
 env._wrapped_env.seed(0)
 
-pool = SimpleReplayBuffer(env_spec=env.spec, **replay_buffer_params)
+pool = SimpleReplayBuffer(env_spec=env.spec, with_raw_action=True, **replay_buffer_params)
 
-sampler = SimpleSampler(**sampler_params)
+sampler = SimpleSampler(with_raw_action=True, **sampler_params)
 
 base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 

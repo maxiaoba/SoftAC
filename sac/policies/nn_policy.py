@@ -19,16 +19,26 @@ class NNPolicy(Policy, Serializable):
         super(NNPolicy, self).__init__(env_spec)
 
     @overrides
-    def get_action(self, observation):
+    def get_action(self, observation, with_raw_action=False):
         """Sample single action based on the observations."""
-        return self.get_actions(observation[None])[0], {}
+        if with_raw_action:
+            actions, raw_actions = self.get_actions(observation[None],True)
+            return actions[0], raw_actions[0], {}
+        else:
+            return self.get_actions(observation[None])[0], {}
 
     @overrides
-    def get_actions(self, observations):
+    def get_actions(self, observations, with_raw_actions=False):
         """Sample actions based on the observations."""
         feed_dict = {self._observations_ph: observations}
-        actions = tf.get_default_session().run(self._actions, feed_dict)
-        return actions
+        if with_raw_actions:
+            actions, raw_actions = \
+                tf.get_default_session().run([self._actions,self._raw_actions],
+                                         feed_dict)
+            return actions, raw_actions
+        else:
+            actions = tf.get_default_session().run(self._actions, feed_dict)
+            return actions
 
     def get_log_pis(self, observations, actions):
         feed_dict = {self._observations_ph: observations, self._actions_ph: actions}

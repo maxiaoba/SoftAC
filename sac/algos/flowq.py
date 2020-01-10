@@ -152,6 +152,12 @@ class FlowQ(RLAlgorithm, Serializable):
             shape=(None, self._Da),
             name='actions',
         )
+        if self._policy._squash:
+            self._raw_actions_ph = tf.placeholder(
+                tf.float32,
+                shape=(None, self._Da),
+                name='raw_actions',
+            )
 
         self._rewards_ph = tf.placeholder(
             tf.float32,
@@ -186,7 +192,10 @@ class FlowQ(RLAlgorithm, Serializable):
             (1 - self._terminals_ph) * self._discount * vf_next_target_t
         )  # N
 
-        log_pi = self._policy.log_pis_for(self._observations_ph,self._actions_ph)
+        if self._policy._squash:
+            log_pi = self._policy.log_pis_for(self._observations_ph,self._raw_actions_ph)
+        else:
+            log_pi = self._policy.log_pis_for(self._observations_ph,self._actions_ph)
 
         self._vf_t = self._vf.get_output_for(self._observations_ph, reuse=True)  # N
         self._vf_params = self._vf.get_params_internal()
@@ -258,6 +267,8 @@ class FlowQ(RLAlgorithm, Serializable):
             self._rewards_ph: batch['rewards'],
             self._terminals_ph: batch['terminals'],
         }
+        if self._policy._squash:
+            feed_dict[self._raw_actions_ph] = batch['raw_actions']
 
         if iteration is not None:
             feed_dict[self._iteration_pl] = iteration
