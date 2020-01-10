@@ -30,6 +30,11 @@ class NNPolicy(Policy, Serializable):
         actions = tf.get_default_session().run(self._actions, feed_dict)
         return actions
 
+    def get_log_pis(self, observations, actions):
+        feed_dict = {self._observations_ph: observations, self._actions_ph: actions}
+        log_pis = tf.get_default_session().run(self._log_pis, feed_dict)
+        return log_pis
+
     @overrides
     def log_diagnostics(self, paths):
         pass

@@ -91,7 +91,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
         # TODO: should always return same shape out
         # Figure out how to make the interface for `log_pis` cleaner
         if with_log_pis:
-            log_pis = self.log_pis_with_conditions_for(
+            log_pis = self.log_pis_for(
                 conditions, raw_actions, name=name, reuse=reuse)
 
             if with_raw_actions:
@@ -101,34 +101,11 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
         return actions
 
-    def log_pis_with_conditions_for(self, conditions, raw_actions, name=None,
+    def log_pis_for(self, conditions, raw_actions, name=None,
                     reuse=tf.AUTO_REUSE):
         name = name or self.name
 
         with tf.variable_scope(name, reuse=reuse):
-            log_pis = self.distribution.log_prob(
-                raw_actions, bijector_kwargs={"condition": conditions})
-
-        if self._squash:
-            log_pis -= self._squash_correction(raw_actions)
-
-        return log_pis
-
-    def log_pis_for(self, observations, actions, name=None,
-                    reuse=tf.AUTO_REUSE):
-        name = name or self.name
-
-        if self._squash:
-            raw_actions = tf.atanh(actions)
-        else:
-            raw_actions = actions
-        with tf.variable_scope(name, reuse=reuse):
-            conditions = (
-                self._observations_preprocessor.get_output_for(
-                    observations, reuse=reuse)
-                if self._observations_preprocessor is not None
-                else observations)
-
             log_pis = self.distribution.log_prob(
                 raw_actions, bijector_kwargs={"condition": conditions})
 
@@ -168,17 +145,10 @@ class LatentSpacePolicy(NNPolicy, Serializable):
             name='latents',
         )
 
-        self._actions_ph = tf.placeholder(
-            dtype=tf.float32,
-            shape=(None, self._Da),
-            name='actions_policy',
-        )
-
-        self._raw_actions, self._actions, self._log_p_t = self.actions_for(
+        self._raw_actions, self._actions, self._log_pis = self.actions_for(
             self._observations_ph, with_log_pis=True, with_raw_actions=True)
         self._determistic_actions = self.actions_for(self._observations_ph,
                                                      self._latents_ph)
-        self._log_pis = self.log_pis_for(self._observations_ph,self._actions_ph)
 
     def get_action(self, observation):
         """Sample single action based on the observations.
@@ -252,7 +222,7 @@ class LatentSpacePolicy(NNPolicy, Serializable):
 
         feeds = { self._observations_ph: batch['observations'] }
         raw_actions, actions, log_pis = tf.get_default_session().run(
-            (self._raw_actions, self._actions, self._log_p_t), feeds)
+            (self._raw_actions, self._actions, self._log_pis), feeds)
 
         logger.record_tabular('policy-entropy-mean', -np.mean(log_pis))
         logger.record_tabular('log-pi-min', np.min(log_pis))

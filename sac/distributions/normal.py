@@ -70,7 +70,9 @@ class Normal(object):
         reg_loss_t += self._reg * 0.5 * tf.reduce_mean(self._mu_t ** 2)
         self._reg_loss_t = reg_loss_t
 
-
+    def log_prob(self,actions):
+        log_pi = self._dist.log_prob(actions)
+        return log_pi
 
     @property
     def log_p_t(self):

@@ -8,7 +8,7 @@ from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import VariantGenerator
 from rllab import config
 
-from sac.algos import SAC
+from sac.algos.sac import SAC
 
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp, unflatten
@@ -20,17 +20,25 @@ from sac.preprocessors import MLPPreprocessor
 from examples.variants import parse_domain_and_task, get_variants
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--exp_name', type=str, default='RealNVP')
-parser.add_argument('--mode', type=str, default='local')
-parser.add_argument('--log_dir', type=str, default='Data')
+parser.add_argument('--exp_name', type=str, default='cartpole')
+parser.add_argument('--scale_reward', type=float, default=1)
+parser.add_argument('--epoch', type=int, default=1000)
+parser.add_argument('--seed', type=int, default=0)
+parser.add_argument('--log_dir', type=str, default='SAC_Gaussian')
 parser.add_argument('--args_data', type=str, default=None)
 parser.add_argument('--snapshot_mode', type=str, default="gap")
-parser.add_argument('--snapshot_gap', type=int, default=10)
+parser.add_argument('--snapshot_gap', type=int, default=100)
 args = parser.parse_args()
 
 from rllab.misc import logger
 import os.path as osp
-log_dir = osp.join(args.log_dir,args.exp_name)
+pre_dir = './Data/'+args.exp_name
+main_dir = args.log_dir+'rs'+str(args.scale_reward)
+log_dir = osp.join(pre_dir,main_dir,'seed'+str(args.seed))
+
+seed = args.seed
+np.random.seed(seed)
+tf.set_random_seed(seed)
 
 tabular_log_file = osp.join(log_dir, 'process.csv')
 text_log_file = osp.join(log_dir, 'text.csv')
@@ -47,14 +55,10 @@ logger.set_log_tabular_only(False)
 logger.push_prefix("[%s] " % args.exp_name)
 
 policy_params = {
-    'preprocessing_hidden_sizes': (256, 256, 4),
-    's_t_units': 2, # num of units of the realNVP inner mlp
-    'coupling_layers': 2,
-    's_t_layers': 1, # num of layers of the realNVP inner mlp
-    'action_prior': 'uniform', # this is a prior for action distribution, not latent distribution
-    'preprocessing_output_nonlinearity': 'relu',
+    'reg': 1e-3,
+    'action_prior': 'uniform',
     'reparameterize': True,
-    'squash': True, # Ture to add tanh on the output
+    'squash': True,
 }
 value_fn_params = {'layer_size': 256}
 algorithm_params = {    
@@ -63,25 +67,25 @@ algorithm_params = {
     'target_update_interval': 1,
     'tau': 0.005,
     'reparameterize': True,
-    'scale_reward': 1.0,
+    'scale_reward': args.scale_reward,
     'base_kwargs': {
-        'n_epochs': 50,
-        'epoch_length': 1000,
+        'n_epochs': args.epoch+1,
+        'epoch_length': 1000, # number of sample() and training done in one epoch
         'n_train_repeat': 1,
         'n_initial_exploration_steps': 1000,
         'eval_render': False,
         'eval_n_episodes': 10,
-        'eval_deterministic': False,
+        'eval_deterministic': True,
     }
 }
 replay_buffer_params = {'max_replay_buffer_size': 1e6}
 sampler_params = {
-    'max_path_length': 200,
+    'max_path_length': 100,
     'min_pool_size': 1000,
     'batch_size': 256,
 }
 
-from cartpole import CartPoleEnv 
+from cartpole import CartPoleEnv
 env = CartPoleEnv()
 
 pool = SimpleReplayBuffer(env_spec=env.spec, **replay_buffer_params)
@@ -97,39 +101,13 @@ vf = NNVFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
 
 initial_exploration_policy = UniformPolicy(env_spec=env.spec)
 
-
-nonlinearity = {
-    None: None,
-    'relu': tf.nn.relu,
-    'tanh': tf.nn.tanh
-}[policy_params['preprocessing_output_nonlinearity']]
-
-preprocessing_hidden_sizes = policy_params.get('preprocessing_hidden_sizes')
-if preprocessing_hidden_sizes is not None:
-    observations_preprocessor = MLPPreprocessor(
+policy = GaussianPolicy(
         env_spec=env.spec,
-        layer_sizes=preprocessing_hidden_sizes,
-        output_nonlinearity=nonlinearity)
-else:
-    observations_preprocessor = None
-
-policy_s_t_layers = policy_params['s_t_layers']
-policy_s_t_units = policy_params['s_t_units']
-s_t_hidden_sizes = [policy_s_t_units] * policy_s_t_layers
-
-bijector_config = {
-    'num_coupling_layers': policy_params['coupling_layers'],
-    'translation_hidden_sizes': s_t_hidden_sizes,
-    'scale_hidden_sizes': s_t_hidden_sizes,
-}
-
-policy = LatentSpacePolicy(
-    env_spec=env.spec,
-    squash=policy_params['squash'],
-    bijector_config=bijector_config,
-    reparameterize=policy_params['reparameterize'],
-    q_function=qf1,
-    observations_preprocessor=observations_preprocessor)
+        hidden_layer_sizes=(M,M),
+        reparameterize=policy_params['reparameterize'],
+        reg=policy_params['reg'],
+        squash=policy_params['squash'],
+)
 
 algorithm = SAC(
     base_kwargs=base_kwargs,

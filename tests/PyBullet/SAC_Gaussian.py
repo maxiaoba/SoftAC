@@ -20,17 +20,24 @@ from sac.preprocessors import MLPPreprocessor
 from examples.variants import parse_domain_and_task, get_variants
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--exp_name', type=str, default='Gaussian')
-parser.add_argument('--mode', type=str, default='local')
-parser.add_argument('--log_dir', type=str, default='Data')
+parser.add_argument('--exp_name', type=str, default='Hopper')
+parser.add_argument('--log_dir', type=str, default='SAC_Gaussian')
+parser.add_argument('--epoch', type=int, default=3000)
+parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--args_data', type=str, default=None)
 parser.add_argument('--snapshot_mode', type=str, default="gap")
-parser.add_argument('--snapshot_gap', type=int, default=10)
+parser.add_argument('--snapshot_gap', type=int, default=500)
 args = parser.parse_args()
 
 from rllab.misc import logger
 import os.path as osp
-log_dir = osp.join(args.log_dir,args.exp_name)
+pre_dir = './Data/'+args.exp_name
+main_dir = args.log_dir
+log_dir = osp.join(pre_dir,main_dir,'seed'+str(args.seed))
+
+seed = args.seed
+np.random.seed(seed)
+tf.set_random_seed(seed)
 
 tabular_log_file = osp.join(log_dir, 'process.csv')
 text_log_file = osp.join(log_dir, 'text.csv')
@@ -46,39 +53,26 @@ logger.set_snapshot_gap(args.snapshot_gap)
 logger.set_log_tabular_only(False)
 logger.push_prefix("[%s] " % args.exp_name)
 
-policy_params = {
-    'reg': 1e-3,
-    'action_prior': 'uniform',
-    'reparameterize': True,
-    'squash': False,
-}
-value_fn_params = {'layer_size': 256}
-algorithm_params = {    
-    'lr': 3e-4,
-    'discount': 0.0, # use 0.0 for deterministic transition
-    'target_update_interval': 1,
-    'tau': 0.005,
-    'reparameterize': True,
-    'scale_reward': 1.0,
-    'base_kwargs': {
-        'n_epochs': 500,
-        'epoch_length': 1000, # number of sample() and training done in one epoch
-        'n_train_repeat': 1,
-        'n_initial_exploration_steps': 1000,
-        'eval_render': False,
-        'eval_n_episodes': 10,
-        'eval_deterministic': False, # True would set policy to be deterministic at evaluation
-    }
-}
-replay_buffer_params = {'max_replay_buffer_size': 1e6}
-sampler_params = {
-    'max_path_length': 5,
-    'min_pool_size': 1000,
-    'batch_size': 256,
-}
+import json
+with open('sac_gaussian_variant.json','r') as in_json:
+    variants = json.load(in_json)
+    variants['seed'] = seed
+    variants["algorithm_params"]["base_kwargs"]["n_epochs"] = args.epoch+1
+with open(osp.join(log_dir,'params.json'),'w') as out_json:
+    json.dump(variants,out_json,indent=2)
 
-from deterministic_rl import DeterministicRLEnv
-env = DeterministicRLEnv()
+policy_params = variants['policy_params']
+value_fn_params = variants['value_fn_params']
+algorithm_params = variants['algorithm_params']
+replay_buffer_params = variants['replay_buffer_params']
+sampler_params = variants['sampler_params']
+
+from rllab.envs.normalized_env import normalize
+from sac.envs.rllab_env import RLLabEnv
+import pybullet_envs
+import gym
+env = normalize(RLLabEnv(gym.make(args.exp_name+'BulletEnv-v0')))
+env.seed(0)
 
 pool = SimpleReplayBuffer(env_spec=env.spec, **replay_buffer_params)
 
@@ -115,7 +109,7 @@ algorithm = SAC(
     scale_reward=algorithm_params['scale_reward'],
     discount=algorithm_params['discount'],
     tau=algorithm_params['tau'],
-    reparameterize=algorithm_params['reparameterize'],
+    reparameterize=policy_params['reparameterize'],
     target_update_interval=algorithm_params['target_update_interval'],
     action_prior=policy_params['action_prior'],
     save_full_state=False,

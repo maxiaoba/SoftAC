@@ -67,3 +67,8 @@ dependencies:
         - path
         - pybullet
         - six
+        - python-dateutil
+        - joblib
+        - scipy
+        - json
+        - qj

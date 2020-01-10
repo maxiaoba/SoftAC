@@ -1,5 +1,3 @@
-import pybullet_envs
-import gym
 import numpy as np
 import time
 import argparse
@@ -9,7 +7,11 @@ parser.add_argument('--exp_name', type=str, default='Ant')
 parser.add_argument('--ml', type=int, default=200)
 args = parser.parse_args()
 
+import pybullet_envs
+import gym
+from sac.envs.rllab_env import RLLabEnv
 env = gym.make(args.exp_name+'BulletEnv-v0')
+env.seed(0)
 env.render('human')
 env.reset()
 

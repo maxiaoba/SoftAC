@@ -68,7 +68,7 @@ class GaussianPolicy(NNPolicy, Serializable):
         # TODO: should always return same shape out
         # Figure out how to make the interface for `log_pis` cleaner
         if with_log_pis:
-            # TODO.code_consolidation: should come from log_pis_for 
+            # TODO.code_consolidation: should come from log_pis_for
             log_pis = distribution.log_p_t
             if self._squash:
                 log_pis -= self._squash_correction(raw_actions)
@@ -76,39 +76,19 @@ class GaussianPolicy(NNPolicy, Serializable):
 
         return actions
     
-    def log_pis_for(self, observations, actions,
-                    name=None, reuse=tf.AUTO_REUSE):
-        name = name or self.name
+    def log_pis_for(self, actions):
         if self._squash:
-            raw_actions = tf.atanh(actions)
-        else:
-            raw_actions = actions
-
-        with tf.variable_scope(name, reuse=reuse):
-            distribution = Normal(
-                hidden_layers_sizes=self._hidden_layers,
-                Dx=self._Da,
-                reparameterize=self._reparameterize,
-                cond_t_lst=(observations,),
-                reg=self._reg
-            )
-
-        log_pis = distribution.log_prob(raw_actions)
-        if self._squash:
-            log_pis -= self._squash_correction(raw_actions)
-
-        return log_pis
+           raw_actions = tf.atanh(actions) 
+           log_pis = self._distribution.log_prob(raw_actions)
+           log_pis -= self._squash_correction(raw_actions)
+           return log_pis
+        return self._distribution.log_prob(raw_actions)
 
     def build(self):
         self._observations_ph = tf.placeholder(
             dtype=tf.float32,
             shape=(None, self._Ds),
             name='observations',
-        )
-        self._actions_ph = tf.placeholder(
-            dtype=tf.float32,
-            shape=(None, self._Da),
-            name='actions',
         )
 
         with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE):
@@ -122,15 +102,12 @@ class GaussianPolicy(NNPolicy, Serializable):
 
         raw_actions = tf.stop_gradient(self.distribution.x_t)
         self._actions = tf.tanh(raw_actions) if self._squash else raw_actions
-        self._log_pis = self.log_pis_for(self._observations_ph,self._actions_ph)
 
     @overrides
     def get_actions(self, observations):
         """Sample actions based on the observations.
-
         If `self._is_deterministic` is True, returns the mean action for the 
         observations. If False, return stochastically sampled action.
-
         TODO.code_consolidation: This should be somewhat similar with
         `LatentSpacePolicy.get_actions`.
         """
@@ -156,10 +133,8 @@ class GaussianPolicy(NNPolicy, Serializable):
     @contextmanager
     def deterministic(self, set_deterministic=True, latent=None):
         """Context manager for changing the determinism of the policy.
-
         See `self.get_action` for further information about the effect of
         self._is_deterministic.
-
         Args:
             set_deterministic (`bool`): Value to set the self._is_deterministic
                 to during the context. The value will be reset back to the
@@ -177,7 +152,6 @@ class GaussianPolicy(NNPolicy, Serializable):
 
     def log_diagnostics(self, iteration, batch):
         """Record diagnostic information to the logger.
-
         Records the mean, min, max, and standard deviation of the GMM
         means, component weights, and covariances.
         """
