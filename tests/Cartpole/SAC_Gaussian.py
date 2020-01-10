@@ -22,12 +22,12 @@ from examples.variants import parse_domain_and_task, get_variants
 parser = argparse.ArgumentParser()
 parser.add_argument('--exp_name', type=str, default='cartpole')
 parser.add_argument('--scale_reward', type=float, default=1)
-parser.add_argument('--epoch', type=int, default=1000)
+parser.add_argument('--epoch', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--log_dir', type=str, default='SAC_Gaussian')
 parser.add_argument('--args_data', type=str, default=None)
 parser.add_argument('--snapshot_mode', type=str, default="gap")
-parser.add_argument('--snapshot_gap', type=int, default=100)
+parser.add_argument('--snapshot_gap', type=int, default=10)
 args = parser.parse_args()
 
 from rllab.misc import logger

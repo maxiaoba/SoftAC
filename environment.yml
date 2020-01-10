@@ -70,5 +70,5 @@ dependencies:
         - python-dateutil
         - joblib
         - scipy
-        - json
-        - qj
+        # - json
+        # - qj
