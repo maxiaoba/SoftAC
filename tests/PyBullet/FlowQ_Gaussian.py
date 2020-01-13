@@ -22,6 +22,7 @@ from examples.variants import parse_domain_and_task, get_variants
 parser = argparse.ArgumentParser()
 parser.add_argument('--exp_name', type=str, default='Hopper')
 parser.add_argument('--log_dir', type=str, default='FlowQ_Gaussian')
+parser.add_argument('--lr', type=float, default=None)
 parser.add_argument('--epoch', type=int, default=3000)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--args_data', type=str, default=None)
@@ -32,7 +33,7 @@ args = parser.parse_args()
 from rllab.misc import logger
 import os.path as osp
 pre_dir = './Data/'+args.exp_name
-main_dir = args.log_dir
+main_dir = args.log_dir+(('lr'+str(args.lr)) if args.lr else '')
 log_dir = osp.join(pre_dir,main_dir,'seed'+str(args.seed))
 
 seed = args.seed
@@ -58,14 +59,17 @@ with open('flowq_gaussian_variant.json','r') as in_json:
     variants = json.load(in_json)
     variants['seed'] = seed
     variants["algorithm_params"]["base_kwargs"]["n_epochs"] = args.epoch+1
-with open(osp.join(log_dir,'params.json'),'w') as out_json:
-    json.dump(variants,out_json,indent=2)
 
+if args.lr:
+    variants['algorithm_params']['lr'] = args.lr
 policy_params = variants['policy_params']
 value_fn_params = variants['value_fn_params']
 algorithm_params = variants['algorithm_params']
 replay_buffer_params = variants['replay_buffer_params']
 sampler_params = variants['sampler_params']
+
+with open(osp.join(log_dir,'params.json'),'w') as out_json:
+    json.dump(variants,out_json,indent=2)
 
 from rllab.envs.normalized_env import normalize
 from sac.envs.rllab_env import RLLabEnv

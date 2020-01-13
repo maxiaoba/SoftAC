@@ -92,9 +92,9 @@ if args.mode == 'train':
     from deterministic_rl import DeterministicRLEnv
     env = DeterministicRLEnv(states=states)
 
-    pool = SimpleReplayBuffer(env_spec=env.spec, **replay_buffer_params)
+    pool = SimpleReplayBuffer(env_spec=env.spec, with_raw_action=True, **replay_buffer_params)
 
-    sampler = SimpleSampler(**sampler_params)
+    sampler = SimpleSampler(with_raw_action=True, **sampler_params)pleSampler(**sampler_params)
 
     base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 

@@ -5,7 +5,7 @@ matplotlib.rcParams.update({'font.size': 10})
 from matplotlib import pyplot as plt
 import numpy as np
 
-itr_interval = 1
+itr_interval = 100
 max_itr = 2e4
 
 fields = [
@@ -19,6 +19,9 @@ plot_path = "./Data/Hopper"
 
 policies = [
             'SAC_Gaussian',
+            'SAC_LSP',
+            'FlowQ_Gaussian',
+            'FlowQ_LSP',
         ]
 policy_names = policies
 colors = []
