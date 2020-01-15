@@ -27,6 +27,7 @@ class FlowQ(RLAlgorithm, Serializable):
             plotter=None,
 
             lr=3e-3,
+            clip_gradient=None,
             scale_reward=1,
             discount=0.99,
             tau=0.01,
@@ -84,6 +85,7 @@ class FlowQ(RLAlgorithm, Serializable):
         self._policy_lr = lr
         self._qf_lr = lr
         self._vf_lr = lr
+        self._clip_gradient = clip_gradient
         self._scale_reward = scale_reward
         self._discount = discount
         self._tau = tau
@@ -217,15 +219,37 @@ class FlowQ(RLAlgorithm, Serializable):
         # reduce overestimation bias from function approximation error.
         self._vf_loss_t = td_loss
 
-        policy_train_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
-            loss=policy_loss,
-            var_list=self._policy.get_params_internal()
-        )
+        # policy_train_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
+        #     loss=policy_loss,
+        #     var_list=self._policy.get_params_internal()
+        # )
+        p_optimizer = tf.train.AdamOptimizer(self._policy_lr, name="PolicyOptimizer")
+        p_gvs = p_optimizer.compute_gradients(policy_loss,var_list=self._policy.get_params_internal())
+        p_grads = [x[0] for x in p_gvs]
+        p_variables = [x[1] for x in p_gvs]
+        if self._clip_gradient is None:
+            p_clipped_grads = p_grads
+            p_grad_norm = tf.global_norm(p_grads)
+        else:
+            p_clipped_grads, p_grad_norm = tf.clip_by_global_norm(p_grads, self._clip_gradient)
+        policy_train_op = p_optimizer.apply_gradients(zip(p_clipped_grads, p_variables))
+        self._p_grad_norm = p_grad_norm
 
-        vf_train_op = tf.train.AdamOptimizer(self._vf_lr).minimize(
-            loss=self._vf_loss_t,
-            var_list=self._vf_params
-        )
+        # vf_train_op = tf.train.AdamOptimizer(self._vf_lr).minimize(
+        #     loss=self._vf_loss_t,
+        #     var_list=self._vf_params
+        # )
+        v_optimizer = tf.train.AdamOptimizer(self._vf_lr, name="VfOptimizer")
+        v_gvs = v_optimizer.compute_gradients(self._vf_loss_t,var_list=self._vf_params)
+        v_grads = [x[0] for x in v_gvs]
+        v_variables = [x[1] for x in v_gvs]
+        if self._clip_gradient is None:
+            v_clipped_grads = v_grads
+            v_grad_norm = tf.global_norm(v_grads)
+        else:
+            v_clipped_grads, v_grad_norm = tf.clip_by_global_norm(v_grads, self._clip_gradient)
+        vf_train_op = v_optimizer.apply_gradients(zip(v_clipped_grads, v_variables))
+        self._v_grad_norm = v_grad_norm
 
         self._training_ops.append(policy_train_op)
         self._training_ops.append(vf_train_op)
@@ -287,11 +311,14 @@ class FlowQ(RLAlgorithm, Serializable):
         """
 
         feed_dict = self._get_feed_dict(iteration, batch)
-        vf, td_loss = self._sess.run(
-            (self._vf_t, self._td_loss), feed_dict)
+        vf, td_loss, p_grad_norm, v_grad_norm = self._sess.run(
+            (self._vf_t, self._td_loss, self._p_grad_norm, self._v_grad_norm),
+            feed_dict)
 
         logger.record_tabular('vf-avg', np.mean(vf))
         logger.record_tabular('vf-std', np.std(vf))
+        logger.record_tabular('vf-grad-norm', v_grad_norm)
+        logger.record_tabular('p-grad-norm', p_grad_norm)
         logger.record_tabular('mean-sq-bellman-error1', td_loss)
 
         self._policy.log_diagnostics(iteration, batch)

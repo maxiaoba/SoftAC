@@ -23,6 +23,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--exp_name', type=str, default='Hopper')
 parser.add_argument('--log_dir', type=str, default='FlowQ_LSP')
 parser.add_argument('--lr', type=float, default=None)
+parser.add_argument('--cg', type=float, default=None)
 parser.add_argument('--epoch', type=int, default=3000)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--args_data', type=str, default=None)
@@ -33,7 +34,9 @@ args = parser.parse_args()
 from rllab.misc import logger
 import os.path as osp
 pre_dir = './Data/'+args.exp_name
-main_dir = args.log_dir+(('lr'+str(args.lr)) if args.lr else '')
+main_dir = args.log_dir\
+            +(('lr'+str(args.lr)) if args.lr else '')\
+            +(('cg'+str(args.cg)) if args.cg else '')
 log_dir = osp.join(pre_dir,main_dir,'seed'+str(args.seed))
 
 seed = args.seed
@@ -59,6 +62,7 @@ with open('flowq_lsp_variant.json','r') as in_json:
     variants = json.load(in_json)
     variants['seed'] = seed
     variants["algorithm_params"]["base_kwargs"]["n_epochs"] = args.epoch+1
+    variants["algorithm_params"]["clip_gradient"] = args.cg
 
 if args.lr:
     variants['algorithm_params']['lr'] = args.lr
@@ -134,6 +138,7 @@ algorithm = FlowQ(
     qf2=qf2,
     vf=vf,
     lr=algorithm_params['lr'],
+    clip_gradient=args.cg,
     scale_reward=algorithm_params['scale_reward'],
     discount=algorithm_params['discount'],
     tau=algorithm_params['tau'],
