@@ -26,6 +26,10 @@ policies = [
             'SAC_LSPlr0.0001',
             'FlowQ_Gaussianlr0.0001',
             'FlowQ_LSPlr0.0001',
+            'FlowQ_Gaussiancg10.0',
+            'FlowQ_LSPcg10.0',
+            'FlowQ_Gaussiancg100.0',
+            'FlowQ_LSPcg100.0',
         ]
 policy_names = policies
 colors = []

@@ -6,7 +6,7 @@
       "eval_n_episodes": 1,
       "eval_render": false,
       "n_epochs": 3001,
-      "n_initial_exploration_steps": 1000,
+      "n_initial_exploration_steps": 10000,
       "n_train_repeat": 1
     },
     "discount": 0.99,
@@ -19,28 +19,14 @@
   },
   "policy_params": {
     "action_prior": "uniform",
-    "coupling_layers": 2,
-    "preprocessing_layer_sizes": [
-      256,
-      256,
-      6
-    ],
-    "preprocessing_output_nonlinearity": "relu",
+    "hidden_layer_width": 256,
+    "reg": 0.001,
     "reparameterize": true,
-    "s_t_layers": 1,
-    "s_t_units": 3,
-    "squash": true,
-    "type": "lsp"
+    "type": "gaussian",
+    "squash": true
   },
   "preprocessor_params": {
-    "function_name": null,
-    "kwargs": {
-      "hidden_layer_sizes": [
-        256,
-        256
-      ],
-      "output_size": 6
-    }
+    "function_name": null
   },
   "replay_buffer_params": {
     "max_replay_buffer_size": 1000000.0

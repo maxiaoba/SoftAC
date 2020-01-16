@@ -56,7 +56,7 @@ logger.set_log_tabular_only(False)
 logger.push_prefix("[%s] " % args.exp_name)
 
 import json
-with open('sac_gaussian_variant.json','r') as in_json:
+with open(args.exp_name+'_gaussian_variant.json','r') as in_json:
     variants = json.load(in_json)
     variants['seed'] = seed
     variants["algorithm_params"]["base_kwargs"]["n_epochs"] = args.epoch+1
