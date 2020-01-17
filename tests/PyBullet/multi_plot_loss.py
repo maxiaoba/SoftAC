@@ -10,26 +10,38 @@ max_itr = 2e4
 
 fields = [
             'return-average',
+            'vf-avg',
+            'log-pi-mean',
+            'mean-sq-bellman-error1',
             ]
 itr_name = 'epoch'
-min_loss = [-np.inf]
-max_loss = [np.inf]
-prepath = "./Data/Hopper"
-plot_path = "./Data/Hopper"
+min_loss = [-np.inf,-np.inf,-np.inf,-np.inf,-np.inf]
+max_loss = [np.inf,np.inf,np.inf,np.inf,np.inf]
+exp_name = \
+    "Ant"
+    # "Humanoid"
+    # "HalfCheetah"
+    # "Walker2D"
+    # "Hopper"
+    
+    
+prepath = "./Data/"+exp_name
+plot_path = "./Data/"+exp_name
 
 policies = [
             'SAC_Gaussian',
-            'SAC_LSP',
-            'FlowQ_Gaussian',
-            'FlowQ_LSP',
-            'SAC_Gaussianlr0.0001',
-            'SAC_LSPlr0.0001',
-            'FlowQ_Gaussianlr0.0001',
-            'FlowQ_LSPlr0.0001',
-            'FlowQ_Gaussiancg10.0',
-            'FlowQ_LSPcg10.0',
-            'FlowQ_Gaussiancg100.0',
-            'FlowQ_LSPcg100.0',
+            # 'SAC_LSP',
+            # 'FlowQ_Gaussian',
+            # 'FlowQ_LSP',
+            # 'SAC_Gaussianlr0.0001',
+            # 'SAC_LSPlr0.0001',
+            # 'FlowQ_Gaussianlr0.0001',
+            # 'FlowQ_LSPlr0.0001',
+            'FlowQ_Gaussiancg1.0',
+            # 'FlowQ_Gaussiancg10.0',
+            # 'FlowQ_LSPcg10.0',
+            # 'FlowQ_Gaussiancg100.0',
+            # 'FlowQ_LSPcg100.0',
         ]
 policy_names = policies
 colors = []
@@ -72,6 +84,7 @@ for fid,field in enumerate(fields):
                             entry_dict = {}
                             for index in range(len(row)):
                                 entry_dict[row[index]] = index
+                            # print(entry_dict)
                         else:
                             itr = i-1#int(float(row[entry_dict[itr_name]]))
                             if itr > max_itr:

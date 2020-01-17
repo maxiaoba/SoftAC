@@ -29,6 +29,7 @@ class FlowQ(RLAlgorithm, Serializable):
             lr=3e-3,
             clip_gradient=None,
             scale_reward=1,
+            min_y=False,
             discount=0.99,
             tau=0.01,
             target_update_interval=1,
@@ -87,6 +88,7 @@ class FlowQ(RLAlgorithm, Serializable):
         self._vf_lr = lr
         self._clip_gradient = clip_gradient
         self._scale_reward = scale_reward
+        self._min_y = min_y
         self._discount = discount
         self._tau = tau
         self._target_update_interval = target_update_interval
@@ -193,6 +195,14 @@ class FlowQ(RLAlgorithm, Serializable):
             self.scale_reward * self._rewards_ph +
             (1 - self._terminals_ph) * self._discount * vf_next_target_t
         )  # N
+
+        if self._min_y:
+            vf_next_t = self._vf.get_output_for(self._next_observations_ph, reuse=True)
+            y2s = tf.stop_gradient(
+                self.scale_reward * self._rewards_ph +
+                (1 - self._terminals_ph) * self._discount * vf_next_t
+            )  # N
+            ys = tf.minimum(ys, y2s)
 
         if self._policy._squash:
             log_pi = self._policy.log_pis_for(self._observations_ph,self._raw_actions_ph)
