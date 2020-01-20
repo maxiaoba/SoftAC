@@ -227,14 +227,9 @@ class FlowQ(RLAlgorithm, Serializable):
         policy_loss = (td_loss
                        + policy_regularization_loss)
 
-        # We update the vf towards the min of two Q-functions in order to
-        # reduce overestimation bias from function approximation error.
-        self._vf_loss_t = td_loss + self._vf_reg * tf.reduce_mean(self._vf_t**2)
+        self._vf_reg_loss = tf.reduce_mean(tf.abs(self._vf_t))
+        self._vf_loss_t = td_loss + self._vf_reg * self._vf_reg_loss
 
-        # policy_train_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
-        #     loss=policy_loss,
-        #     var_list=self._policy.get_params_internal()
-        # )
         p_optimizer = tf.train.AdamOptimizer(self._policy_lr, name="PolicyOptimizer")
         p_gvs = p_optimizer.compute_gradients(policy_loss,var_list=self._policy.get_params_internal())
         p_grads = [x[0] for x in p_gvs]
@@ -247,10 +242,6 @@ class FlowQ(RLAlgorithm, Serializable):
         policy_train_op = p_optimizer.apply_gradients(zip(p_clipped_grads, p_variables))
         self._p_grad_norm = p_grad_norm
 
-        # vf_train_op = tf.train.AdamOptimizer(self._vf_lr).minimize(
-        #     loss=self._vf_loss_t,
-        #     var_list=self._vf_params
-        # )
         v_optimizer = tf.train.AdamOptimizer(self._vf_lr, name="VfOptimizer")
         v_gvs = v_optimizer.compute_gradients(self._vf_loss_t,var_list=self._vf_params)
         v_grads = [x[0] for x in v_gvs]
@@ -323,13 +314,14 @@ class FlowQ(RLAlgorithm, Serializable):
         """
 
         feed_dict = self._get_feed_dict(iteration, batch)
-        vf, td_loss, p_grad_norm, v_grad_norm = self._sess.run(
-            (self._vf_t, self._td_loss, self._p_grad_norm, self._v_grad_norm),
+        vf, td_loss, vf_reg_loss, p_grad_norm, v_grad_norm = self._sess.run(
+            (self._vf_t, self._td_loss, self._vf_reg_loss, self._p_grad_norm, self._v_grad_norm),
             feed_dict)
 
         logger.record_tabular('vf-avg', np.mean(vf))
         logger.record_tabular('vf-std', np.std(vf))
         logger.record_tabular('vf-grad-norm', v_grad_norm)
+        logger.record_tabular('vf-reg-loss', vf_reg_loss)
         logger.record_tabular('p-grad-norm', p_grad_norm)
         logger.record_tabular('mean-sq-bellman-error1', td_loss)
 
