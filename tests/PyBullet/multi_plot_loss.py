@@ -18,11 +18,11 @@ itr_name = 'epoch'
 min_loss = [-np.inf,-np.inf,-np.inf,-np.inf,-np.inf]
 max_loss = [np.inf,np.inf,np.inf,np.inf,np.inf]
 exp_name = \
-    "Ant"
-    # "Humanoid"
-    # "HalfCheetah"
-    # "Walker2D"
-    # "Hopper"
+"Humanoid"
+# "HalfCheetah"
+# "Walker2D"
+# "Ant"
+# "Hopper"
     
     
 prepath = "./Data/"+exp_name
@@ -38,6 +38,7 @@ policies = [
             # 'FlowQ_Gaussianlr0.0001',
             # 'FlowQ_LSPlr0.0001',
             'FlowQ_Gaussiancg1.0',
+            'FlowQ_Gaussiancg1.0min_y',
             # 'FlowQ_Gaussiancg10.0',
             # 'FlowQ_LSPcg10.0',
             # 'FlowQ_Gaussiancg100.0',

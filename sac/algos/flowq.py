@@ -30,6 +30,7 @@ class FlowQ(RLAlgorithm, Serializable):
             clip_gradient=None,
             scale_reward=1,
             min_y=False,
+            vf_reg=0.0,
             discount=0.99,
             tau=0.01,
             target_update_interval=1,
@@ -89,6 +90,7 @@ class FlowQ(RLAlgorithm, Serializable):
         self._clip_gradient = clip_gradient
         self._scale_reward = scale_reward
         self._min_y = min_y
+        self._vf_reg = vf_reg
         self._discount = discount
         self._tau = tau
         self._target_update_interval = target_update_interval
@@ -227,7 +229,7 @@ class FlowQ(RLAlgorithm, Serializable):
 
         # We update the vf towards the min of two Q-functions in order to
         # reduce overestimation bias from function approximation error.
-        self._vf_loss_t = td_loss
+        self._vf_loss_t = td_loss + self._vf_reg * tf.reduce_mean(self._vf_t**2)
 
         # policy_train_op = tf.train.AdamOptimizer(self._policy_lr).minimize(
         #     loss=policy_loss,

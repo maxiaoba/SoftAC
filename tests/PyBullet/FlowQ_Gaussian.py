@@ -25,6 +25,7 @@ parser.add_argument('--log_dir', type=str, default='FlowQ_Gaussian')
 parser.add_argument('--lr', type=float, default=None)
 parser.add_argument('--cg', type=float, default=None)
 parser.add_argument('--min_y', type=int, default=0)
+parser.add_argument('--vf_reg', type=float, default=0.)
 parser.add_argument('--epoch', type=int, default=3000)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--args_data', type=str, default=None)
@@ -38,7 +39,8 @@ pre_dir = './Data/'+args.exp_name
 main_dir = args.log_dir\
             +(('lr'+str(args.lr)) if args.lr else '')\
             +(('cg'+str(args.cg)) if args.cg else '')\
-            +('min_y' if args.min_y==1 else '')
+            +('min_y' if args.min_y==1 else '')\
+            +(('vf_reg'+str(args.vf_reg)) if args.min_y>0. else '')
 log_dir = osp.join(pre_dir,main_dir,'seed'+str(args.seed))
 
 seed = args.seed
@@ -66,6 +68,7 @@ with open(args.exp_name+'_gaussian_variant.json','r') as in_json:
     variants["algorithm_params"]["base_kwargs"]["n_epochs"] = args.epoch+1
     variants["algorithm_params"]["clip_gradient"] = args.cg
     variants["algorithm_params"]["min_y"] = (args.min_y==1)
+    variants["algorithm_params"]["vf_reg"] = args.vf_reg
 
 if args.lr:
     variants['algorithm_params']['lr'] = args.lr
@@ -120,6 +123,7 @@ algorithm = FlowQ(
     clip_gradient=algorithm_params["clip_gradient"],
     scale_reward=algorithm_params['scale_reward'],
     min_y=algorithm_params['min_y'],
+    vf_reg=algorithm_params['vf_reg'],
     discount=algorithm_params['discount'],
     tau=algorithm_params['tau'],
     reparameterize=policy_params['reparameterize'],
