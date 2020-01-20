@@ -40,7 +40,7 @@ main_dir = args.log_dir\
             +(('lr'+str(args.lr)) if args.lr else '')\
             +(('cg'+str(args.cg)) if args.cg else '')\
             +('min_y' if args.min_y==1 else '')\
-            +(('vf_reg'+str(args.vf_reg)) if args.min_y>0. else '')
+            +(('vf_reg'+str(args.vf_reg)) if args.vf_reg>0. else '')
 log_dir = osp.join(pre_dir,main_dir,'seed'+str(args.seed))
 
 seed = args.seed
