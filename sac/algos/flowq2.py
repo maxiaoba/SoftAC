@@ -183,19 +183,12 @@ class FlowQ(RLAlgorithm, Serializable):
         with tf.variable_scope('target'):
             vf_next_target_t = self._vf.get_output_for(self._next_observations_ph)  # N
             self._vf_target_params = self._vf.get_params_internal()
+            
+        vf_next_t = self._vf.get_output_for(self._next_observations_ph, reuse=True)  # N
 
-        ys = tf.stop_gradient(
-            self.scale_reward * self._rewards_ph +
-            (1 - self._terminals_ph) * self._discount * vf_next_target_t
-        )  # N
-
-        if self._min_y:
-            vf_next_t = self._vf.get_output_for(self._next_observations_ph, reuse=True)
-            y2s = tf.stop_gradient(
-                self.scale_reward * self._rewards_ph +
-                (1 - self._terminals_ph) * self._discount * vf_next_t
-            )  # N
-            ys = tf.minimum(ys, y2s)
+        ys = \
+            self.scale_reward * self._rewards_ph + \
+            (1 - self._terminals_ph) * self._discount * vf_next_t  # N
 
         if self._policy._squash:
             log_pi = self._policy.log_pis_for(self._observations_ph,self._raw_actions_ph)

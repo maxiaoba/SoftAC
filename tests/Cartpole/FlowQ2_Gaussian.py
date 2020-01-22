@@ -8,14 +8,14 @@ from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import VariantGenerator
 from rllab import config
 
-from sac.algos.flowq import FlowQ
+from sac.algos.flowq2 import FlowQ
 
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp, unflatten
 from sac.policies import GaussianPolicy, LatentSpacePolicy, GMMPolicy, UniformPolicy
 from sac.misc.sampler import SimpleSampler
 from sac.replay_buffers import SimpleReplayBuffer
-from sac.value_functions import NNQFunction, NNVFunction
+from sac.value_functions.value_function import NNVFunction
 from sac.preprocessors import MLPPreprocessor
 from examples.variants import parse_domain_and_task, get_variants
 
@@ -24,7 +24,7 @@ parser.add_argument('--exp_name', type=str, default='cartpole')
 parser.add_argument('--scale_reward', type=float, default=1)
 parser.add_argument('--epoch', type=int, default=100)
 parser.add_argument('--seed', type=int, default=0)
-parser.add_argument('--log_dir', type=str, default='FlowQ_Gaussian')
+parser.add_argument('--log_dir', type=str, default='FlowQ2_Gaussian')
 parser.add_argument('--args_data', type=str, default=None)
 parser.add_argument('--snapshot_mode', type=str, default="gap")
 parser.add_argument('--snapshot_gap', type=int, default=10)

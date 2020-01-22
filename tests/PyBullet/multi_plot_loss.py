@@ -30,26 +30,23 @@ plot_path = "./Data/"+exp_name
 
 policies = [
             'SAC_Gaussian',
-            # 'SAC_LSP',
-            # 'FlowQ_Gaussian',
-            # 'FlowQ_LSP',
-            # 'SAC_Gaussianlr0.0001',
-            # 'SAC_LSPlr0.0001',
-            # 'FlowQ_Gaussianlr0.0001',
-            # 'FlowQ_LSPlr0.0001',
-            'FlowQ_Gaussiancg1.0',
-            'FlowQ_Gaussiancg1.0min_y',
-            # 'FlowQ_Gaussiancg10.0',
-            # 'FlowQ_LSPcg10.0',
-            # 'FlowQ_Gaussiancg100.0',
-            # 'FlowQ_LSPcg100.0',
+            # 'FlowQ_Gaussiancg1.0',
+            # 'FlowQ_Gaussiancg1.0min_y',
+            # 'FlowQ_Gaussiancg1.0vf_reg0.1',
+            # 'FlowQ_Gaussiancg1.0vf_reg1.0',
+            # 'FlowQ_Gaussiancg1.0vf_reg5.0',
+            # 'FlowQ_Gaussiancg1.0vf_reg10.0',
+            'FlowQ2_Gaussian',
+            'FlowQ2_Gaussiancg1.0',
+            'FlowQ2_Gaussiancg1.0vf_reg1.0',
+            'FlowQ2_Gaussiancg1.0vf_reg10.0',
         ]
 policy_names = policies
 colors = []
 for pid in range(len(policies)):
     colors.append('C'+str(pid))
 
-extra_name = ''
+extra_name = 'FlowQ2_Gaussian'
 
 pre_name = ''
 post_name = ''
