@@ -29,6 +29,8 @@ class FlowQ(RLAlgorithm, Serializable):
             scale_reward=1,
             min_y=False,
             vf_reg=0.0,
+            vf_reg_decay=1.0,
+            vf_reg_min=0.0,
             discount=0.99,
             tau=0.01,
             target_update_interval=1,
@@ -82,6 +84,8 @@ class FlowQ(RLAlgorithm, Serializable):
         self._scale_reward = scale_reward
         self._min_y = min_y
         self._vf_reg = vf_reg
+        self._vf_reg_decay = vf_reg_decay
+        self._vf_reg_min = vf_reg_min
         self._discount = discount
         self._tau = tau
         self._target_update_interval = target_update_interval
@@ -168,6 +172,12 @@ class FlowQ(RLAlgorithm, Serializable):
             name='terminals',
         )
 
+        self._vf_reg_ph = tf.placeholder(
+            tf.float32,
+            shape=(),
+            name='vf_reg',
+        )
+
     @property
     def scale_reward(self):
         if callable(self._scale_reward):
@@ -219,7 +229,7 @@ class FlowQ(RLAlgorithm, Serializable):
                        + policy_regularization_loss)
 
         self._vf_reg_loss = tf.reduce_mean(tf.abs(self._vf_t))
-        self._vf_loss_t = td_loss + self._vf_reg * self._vf_reg_loss
+        self._vf_loss_t = td_loss + self._vf_reg_ph * self._vf_reg_loss
 
         p_optimizer = tf.train.AdamOptimizer(self._policy_lr, name="PolicyOptimizer")
         p_gvs = p_optimizer.compute_gradients(policy_loss,var_list=self._policy.get_params_internal())
@@ -267,6 +277,8 @@ class FlowQ(RLAlgorithm, Serializable):
     @overrides
     def _do_training(self, iteration, batch):
         """Runs the operations for updating training and target ops."""
+        self._vf_reg = np.maximum(self._vf_reg*self._vf_reg_decay,
+                                 self._vf_reg_min)
 
         feed_dict = self._get_feed_dict(iteration, batch)
         self._sess.run(self._training_ops, feed_dict)
@@ -284,6 +296,7 @@ class FlowQ(RLAlgorithm, Serializable):
             self._next_observations_ph: batch['next_observations'],
             self._rewards_ph: batch['rewards'],
             self._terminals_ph: batch['terminals'],
+            self._vf_reg_ph:self._vf_reg,
         }
         if self._policy._squash:
             feed_dict[self._raw_actions_ph] = batch['raw_actions']
@@ -313,6 +326,7 @@ class FlowQ(RLAlgorithm, Serializable):
         logger.record_tabular('vf-std', np.std(vf))
         logger.record_tabular('vf-grad-norm', v_grad_norm)
         logger.record_tabular('vf-reg-loss', vf_reg_loss)
+        logger.record_tabular('vf-reg-weight', self._vf_reg)
         logger.record_tabular('p-grad-norm', p_grad_norm)
         logger.record_tabular('mean-sq-bellman-error1', td_loss)
 
@@ -340,6 +354,7 @@ class FlowQ(RLAlgorithm, Serializable):
                 'policy': self._policy,
                 'vf': self._vf,
                 'env': self._env,
+                'vf_reg': self._vf_reg,
             }
 
         return snapshot
@@ -353,6 +368,7 @@ class FlowQ(RLAlgorithm, Serializable):
             'policy-params': self._policy.get_param_values(),
             'pool': self._pool.__getstate__(),
             'env': self._env.__getstate__(),
+            'vf_reg': self._vf_reg,
         })
         return d
 
@@ -364,3 +380,4 @@ class FlowQ(RLAlgorithm, Serializable):
         self._policy.set_param_values(d['policy-params'])
         self._pool.__setstate__(d['pool'])
         self._env.__setstate__(d['env'])
+        self._vf_reg = d['vf_reg']

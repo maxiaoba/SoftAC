@@ -26,6 +26,8 @@ parser.add_argument('--lr', type=float, default=None)
 parser.add_argument('--cg', type=float, default=None)
 parser.add_argument('--min_y', type=int, default=0)
 parser.add_argument('--vf_reg', type=float, default=0.)
+parser.add_argument('--vf_reg_decay', type=float, default=1.)
+parser.add_argument('--vf_reg_min', type=float, default=0.)
 parser.add_argument('--epoch', type=int, default=3000)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--args_data', type=str, default=None)
@@ -40,7 +42,10 @@ main_dir = args.log_dir\
             +(('lr'+str(args.lr)) if args.lr else '')\
             +(('cg'+str(args.cg)) if args.cg else '')\
             +('min_y' if args.min_y==1 else '')\
-            +(('vf_reg'+str(args.vf_reg)) if args.vf_reg>0. else '')
+            +(('vf_reg'+str(args.vf_reg)\
+                +(('decay'+str(args.vf_reg_decay)+'min'+str(args.vf_reg_min))\
+                 if args.vf_reg_decay<1. else ''))\
+             if args.vf_reg>0. else '')
 log_dir = osp.join(pre_dir,main_dir,'seed'+str(args.seed))
 
 seed = args.seed
@@ -69,6 +74,8 @@ with open(args.exp_name+'_gaussian_variant.json','r') as in_json:
     variants["algorithm_params"]["clip_gradient"] = args.cg
     variants["algorithm_params"]["min_y"] = (args.min_y==1)
     variants["algorithm_params"]["vf_reg"] = args.vf_reg
+    variants["algorithm_params"]["vf_reg_decay"] = args.vf_reg_decay
+    variants["algorithm_params"]["vf_reg_min"] = args.vf_reg_min
 
 if args.lr:
     variants['algorithm_params']['lr'] = args.lr
@@ -95,8 +102,6 @@ sampler = SimpleSampler(with_raw_action=True, **sampler_params)
 base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
 M = value_fn_params['layer_size']
-qf1 = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M), name='qf1')
-qf2 = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M), name='qf2')
 vf = NNVFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
 
 initial_exploration_policy = UniformPolicy(env_spec=env.spec)
@@ -116,14 +121,14 @@ algorithm = FlowQ(
     policy=policy,
     initial_exploration_policy=initial_exploration_policy,
     pool=pool,
-    qf1=qf1,
-    qf2=qf2,
     vf=vf,
     lr=algorithm_params['lr'],
     clip_gradient=algorithm_params["clip_gradient"],
     scale_reward=algorithm_params['scale_reward'],
     min_y=algorithm_params['min_y'],
     vf_reg=algorithm_params['vf_reg'],
+    vf_reg_decay=algorithm_params['vf_reg_decay'],
+    vf_reg_min=algorithm_params['vf_reg_min'],
     discount=algorithm_params['discount'],
     tau=algorithm_params['tau'],
     reparameterize=policy_params['reparameterize'],

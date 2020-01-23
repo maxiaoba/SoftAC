@@ -11,18 +11,18 @@ max_itr = 2e4
 fields = [
             'return-average',
             'vf-avg',
-            'log-pi-mean',
-            'mean-sq-bellman-error1',
+            # 'log-pi-mean',
+            # 'mean-sq-bellman-error1',
             ]
 itr_name = 'epoch'
 min_loss = [-np.inf,-np.inf,-np.inf,-np.inf,-np.inf]
 max_loss = [np.inf,np.inf,np.inf,np.inf,np.inf]
 exp_name = \
-"Humanoid"
-# "HalfCheetah"
-# "Walker2D"
+"Hopper"
 # "Ant"
-# "Hopper"
+# "Walker2D"
+# "HalfCheetah"
+# "Humanoid"
     
     
 prepath = "./Data/"+exp_name
@@ -37,9 +37,7 @@ policies = [
             # 'FlowQ_Gaussiancg1.0vf_reg5.0',
             # 'FlowQ_Gaussiancg1.0vf_reg10.0',
             'FlowQ2_Gaussian',
-            'FlowQ2_Gaussiancg1.0',
-            'FlowQ2_Gaussiancg1.0vf_reg1.0',
-            'FlowQ2_Gaussiancg1.0vf_reg10.0',
+            # 'FlowQ2_Gaussiancg1.0',
         ]
 policy_names = policies
 colors = []
