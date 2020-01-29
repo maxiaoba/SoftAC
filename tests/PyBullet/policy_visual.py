@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--exp_name', type=str, default='Hopper')
 parser.add_argument('--log_dir', type=str, default='SAC_Gaussian')
 parser.add_argument('--seed', type=int, default=0)
-parser.add_argument('--itr', type=int, default=20000)
+parser.add_argument('--itr', type=int, default=3000)
 args = parser.parse_args()
 
 pre_dir = './Data/'+args.exp_name

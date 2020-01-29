@@ -11,18 +11,18 @@ max_itr = 2e4
 fields = [
             'return-average',
             'vf-avg',
-            # 'log-pi-mean',
-            # 'mean-sq-bellman-error1',
+            'log-pi-mean',
+            'mean-sq-bellman-error1',
             ]
 itr_name = 'epoch'
 min_loss = [-np.inf,-np.inf,-np.inf,-np.inf,-np.inf]
 max_loss = [np.inf,np.inf,np.inf,np.inf,np.inf]
 exp_name = \
-"Hopper"
+"HalfCheetah"
+# "Humanoid"
+# "Hopper"
 # "Ant"
 # "Walker2D"
-# "HalfCheetah"
-# "Humanoid"
     
     
 prepath = "./Data/"+exp_name
@@ -33,10 +33,12 @@ policies = [
             # 'FlowQ_Gaussiancg1.0',
             # 'FlowQ_Gaussiancg1.0min_y',
             # 'FlowQ_Gaussiancg1.0vf_reg0.1',
-            # 'FlowQ_Gaussiancg1.0vf_reg1.0',
+            'FlowQ_Gaussiancg1.0vf_reg1.0',
             # 'FlowQ_Gaussiancg1.0vf_reg5.0',
             # 'FlowQ_Gaussiancg1.0vf_reg10.0',
-            'FlowQ2_Gaussian',
+            # 'FlowQ_Gaussiancg1.0vf_reg5.0decay0.999999min0.0',
+            # 'FlowQ_Gaussiancg1.0vf_reg10.0decay0.999999min0.0',
+            # 'FlowQ2_Gaussian',
             # 'FlowQ2_Gaussiancg1.0',
         ]
 policy_names = policies
@@ -44,7 +46,7 @@ colors = []
 for pid in range(len(policies)):
     colors.append('C'+str(pid))
 
-extra_name = 'FlowQ2_Gaussian'
+extra_name = ''
 
 pre_name = ''
 post_name = ''
@@ -53,7 +55,7 @@ plot_name = extra_name
 
 for fid,field in enumerate(fields):
     print(field)
-    fig = plt.figure(fid,figsize=(10,10))
+    fig = plt.figure(fid,figsize=(5,5))
     legends = []
     plts = []
     for (policy_index,policy) in enumerate(policies):
