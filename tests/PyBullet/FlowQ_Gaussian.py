@@ -23,6 +23,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--exp_name', type=str, default='Hopper')
 parser.add_argument('--log_dir', type=str, default='FlowQ_Gaussian')
 parser.add_argument('--lr', type=float, default=None)
+parser.add_argument('--bs', type=int, default=None)
 parser.add_argument('--cg', type=float, default=None)
 parser.add_argument('--min_y', type=int, default=0)
 parser.add_argument('--vf_reg', type=float, default=0.)
@@ -40,6 +41,7 @@ import os.path as osp
 pre_dir = './Data/'+args.exp_name
 main_dir = args.log_dir\
             +(('lr'+str(args.lr)) if args.lr else '')\
+            +(('bs'+str(args.bs)) if args.bs else '')\
             +(('cg'+str(args.cg)) if args.cg else '')\
             +('min_y' if args.min_y==1 else '')\
             +(('vf_reg'+str(args.vf_reg)\
@@ -79,6 +81,8 @@ with open(args.exp_name+'_gaussian_variant.json','r') as in_json:
 
 if args.lr:
     variants['algorithm_params']['lr'] = args.lr
+if args.bs:
+    variants['sampler_params']['batch_size'] = args.bs
 policy_params = variants['policy_params']
 value_fn_params = variants['value_fn_params']
 algorithm_params = variants['algorithm_params']

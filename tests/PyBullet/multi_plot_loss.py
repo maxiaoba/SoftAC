@@ -18,8 +18,8 @@ itr_name = 'epoch'
 min_loss = [-np.inf,-np.inf,-np.inf,-np.inf,-np.inf]
 max_loss = [np.inf,np.inf,np.inf,np.inf,np.inf]
 exp_name = \
-"HalfCheetah"
-# "Humanoid"
+"Humanoid"
+# "HalfCheetah"
 # "Hopper"
 # "Ant"
 # "Walker2D"
@@ -33,20 +33,23 @@ policies = [
             # 'FlowQ_Gaussiancg1.0',
             # 'FlowQ_Gaussiancg1.0min_y',
             # 'FlowQ_Gaussiancg1.0vf_reg0.1',
-            'FlowQ_Gaussiancg1.0vf_reg1.0',
+            # 'FlowQ_Gaussiancg1.0vf_reg1.0',
             # 'FlowQ_Gaussiancg1.0vf_reg5.0',
             # 'FlowQ_Gaussiancg1.0vf_reg10.0',
             # 'FlowQ_Gaussiancg1.0vf_reg5.0decay0.999999min0.0',
             # 'FlowQ_Gaussiancg1.0vf_reg10.0decay0.999999min0.0',
             # 'FlowQ2_Gaussian',
             # 'FlowQ2_Gaussiancg1.0',
+            'FlowQ3_Gaussian',
+            'FlowQ3_Gaussiancg1.0',
+            'FlowQ3_Gaussiancg1.0vf_reg1.0',
         ]
 policy_names = policies
 colors = []
 for pid in range(len(policies)):
     colors.append('C'+str(pid))
 
-extra_name = ''
+extra_name = 'FlowQ3'
 
 pre_name = ''
 post_name = ''
@@ -65,6 +68,7 @@ for fid,field in enumerate(fields):
         min_itr = np.inf
         for trial in range(3):
             file_path = prepath+'/'+policy_path+'/'+'seed'+str(trial)+'/process.csv'
+            print(file_path)
             if os.path.exists(file_path):
                 print(policy+'_'+str(trial))
                 itrs = []
