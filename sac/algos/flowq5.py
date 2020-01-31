@@ -191,19 +191,25 @@ class FlowQ(RLAlgorithm, Serializable):
     def _init_train_update(self):
 
         with tf.variable_scope('target'):
-            vf_next_target_t = self._vf.get_output_for(self._next_observations_ph)  # N
+            vf_next__target = self._vf.get_output_for(self._next_observations_ph)  # N
             vf_target_t = self._vf.get_output_for(self._observations_ph, reuse=True)  # N
             self._vf_target_params = self._vf.get_params_internal()
+            if self._policy._squash:
+                log_pi_target = self._policy.log_pis_for(self._observations_ph,self._raw_actions_ph)
+            else:
+                log_pi_target = self._policy.log_pis_for(self._observations_ph,self._actions_ph)
+            self._policy_target_params = self._policy.get_params_internal()
 
         ys = tf.stop_gradient(
             self.scale_reward * self._rewards_ph +
-            (1 - self._terminals_ph) * self._discount * vf_next_target_t
+            (1 - self._terminals_ph) * self._discount * vf_next__target
         )  # N
 
         if self._policy._squash:
             log_pi = self._policy.log_pis_for(self._observations_ph,self._raw_actions_ph)
         else:
             log_pi = self._policy.log_pis_for(self._observations_ph,self._actions_ph)
+        self._policy_params = self._policy_target_params = self._policy.get_params_internal()
 
         self._vf_t = self._vf.get_output_for(self._observations_ph, reuse=True)  # N
         self._vf_params = self._vf.get_params_internal()
@@ -214,12 +220,14 @@ class FlowQ(RLAlgorithm, Serializable):
         policy_regularization_loss = tf.reduce_sum(
             policy_regularization_losses)
 
-        td_loss = tf.reduce_mean(tf.squared_difference(ys,vf_target_t+log_pi))
+        td_loss = tf.reduce_mean(tf.squared_difference(ys,
+                                        vf_target_t+log_pi))
         self._td_loss = td_loss
         policy_loss = (td_loss
                        + policy_regularization_loss)
 
-        td_loss2 = tf.reduce_mean(tf.squared_difference(ys,self._vf_t+log_pi))
+        td_loss2 = tf.reduce_mean(tf.squared_difference(ys,
+                                        self._vf_t+log_pi_target))
         self._td_loss2 = td_loss2
         self._vf_reg_loss = tf.reduce_mean(tf.abs(self._vf_t))
         self._vf_loss_t = td_loss2 + self._vf_reg_ph * self._vf_reg_loss
@@ -254,8 +262,8 @@ class FlowQ(RLAlgorithm, Serializable):
     def _init_target_ops(self):
         """Create tensorflow operations for updating target value function."""
 
-        source_params = self._vf_params
-        target_params = self._vf_target_params
+        source_params = self._vf_params + self._policy_params
+        target_params = self._vf_target_params + self._policy_target_params
 
         self._target_ops = [
             tf.assign(target, (1 - self._tau) * target + self._tau * source)
