@@ -18,9 +18,9 @@ itr_name = 'epoch'
 min_loss = [-np.inf,-np.inf,-np.inf,-np.inf,-np.inf]
 max_loss = [np.inf,np.inf,np.inf,np.inf,np.inf]
 exp_name = \
-"Humanoid"
+"Hopper"
 # "HalfCheetah"
-# "Hopper"
+# "Humanoid"
 # "Ant"
 # "Walker2D"
     
@@ -30,10 +30,10 @@ plot_path = "./Data/"+exp_name
 
 policies = [
             'SAC_Gaussian',
-            # 'FlowQ_Gaussiancg1.0',
+            # 'FlowQ_Gaussianbs2048cg1.0',
             # 'FlowQ_Gaussiancg1.0min_y',
             # 'FlowQ_Gaussiancg1.0vf_reg0.1',
-            # 'FlowQ_Gaussiancg1.0vf_reg1.0',
+            # 'FlowQ_Gaussianbs2048cg1.0vf_reg1.0',
             # 'FlowQ_Gaussiancg1.0vf_reg5.0',
             # 'FlowQ_Gaussiancg1.0vf_reg10.0',
             # 'FlowQ_Gaussiancg1.0vf_reg5.0decay0.999999min0.0',
@@ -41,8 +41,8 @@ policies = [
             # 'FlowQ2_Gaussian',
             # 'FlowQ2_Gaussiancg1.0',
             'FlowQ3_Gaussian',
-            'FlowQ3_Gaussiancg1.0',
-            'FlowQ3_Gaussiancg1.0vf_reg1.0',
+            # 'FlowQ3_Gaussiancg1.0',
+            # 'FlowQ3_Gaussiancg1.0vf_reg1.0',
         ]
 policy_names = policies
 colors = []
