@@ -1,0 +1,42 @@
+{
+  "algorithm_params": {
+    "base_kwargs": {
+      "epoch_length": 1000,
+      "eval_deterministic": true,
+      "eval_n_episodes": 1,
+      "eval_render": false,
+      "n_epochs": 3001,
+      "n_initial_exploration_steps": 10000,
+      "n_train_repeat": 1
+    },
+    "discount": 0.99,
+    "lr": 0.0003,
+    "scale_reward": 1.0,
+    "store_extra_policy_info": false,
+    "target_entropy": "auto",
+    "target_update_interval": 1,
+    "tau": 0.005
+  },
+  "policy_params": {
+    "action_prior": "uniform",
+    "hidden_layer_width": 256,
+    "reg": 0.001,
+    "reparameterize": true,
+    "type": "gaussian",
+    "squash": true
+  },
+  "preprocessor_params": {
+    "function_name": null
+  },
+  "replay_buffer_params": {
+    "max_replay_buffer_size": 1000000.0
+  },
+  "sampler_params": {
+    "batch_size": 256,
+    "max_path_length": 1000,
+    "min_pool_size": 1000
+  },
+  "value_fn_params": {
+    "layer_size": 256
+  }
+}
