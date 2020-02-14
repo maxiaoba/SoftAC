@@ -96,7 +96,7 @@ with open(osp.join(log_dir,'params.json'),'w') as out_json:
 
 from rllab.envs.normalized_env import normalize
 from sac.envs import GymEnv
-env = normalize(GymEnv(args.exp_name+'-v1'),normalize_obs=args.nmob)
+env = normalize(GymEnv(args.exp_name+'-v1'),normalize_obs=(args.nmob==1))
 # env._wrapped_env.seed(0)
 
 pool = SimpleReplayBuffer(env_spec=env.spec, with_raw_action=True, **replay_buffer_params)
