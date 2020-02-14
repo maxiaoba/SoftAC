@@ -21,6 +21,7 @@ from examples.variants import parse_domain_and_task, get_variants
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--exp_name', type=str, default='Hopper')
+parser.add_argument('--nmob', type=int, default=0) # nomalize ob
 parser.add_argument('--log_dir', type=str, default='FlowQ_Gaussian')
 parser.add_argument('--lr', type=float, default=None)
 parser.add_argument('--bs', type=int, default=None)
@@ -40,6 +41,7 @@ from rllab.misc import logger
 import os.path as osp
 pre_dir = './Data/'+args.exp_name
 main_dir = args.log_dir\
+            +('nmob' if args.nmob==1 else '')\
             +(('lr'+str(args.lr)) if args.lr else '')\
             +(('bs'+str(args.bs)) if args.bs else '')\
             +(('cg'+str(args.cg)) if args.cg else '')\
@@ -94,7 +96,7 @@ with open(osp.join(log_dir,'params.json'),'w') as out_json:
 
 from rllab.envs.normalized_env import normalize
 from sac.envs import GymEnv
-env = normalize(GymEnv(args.exp_name+'-v1'))
+env = normalize(GymEnv(args.exp_name+'-v1'),normalize_obs=args.nmob)
 # env._wrapped_env.seed(0)
 
 pool = SimpleReplayBuffer(env_spec=env.spec, with_raw_action=True, **replay_buffer_params)

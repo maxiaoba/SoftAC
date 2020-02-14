@@ -289,7 +289,7 @@ class FlowQ(RLAlgorithm, Serializable):
 
     def _get_feed_dict(self, iteration, batch):
         """Construct TensorFlow feed_dict from sample batch."""
-
+        
         feed_dict = {
             self._observations_ph: batch['observations'],
             self._actions_ph: batch['actions'],
