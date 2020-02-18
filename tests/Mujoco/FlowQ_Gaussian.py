@@ -26,6 +26,7 @@ parser.add_argument('--log_dir', type=str, default='FlowQ_Gaussian')
 parser.add_argument('--lr', type=float, default=None)
 parser.add_argument('--bs', type=int, default=None)
 parser.add_argument('--cg', type=float, default=None)
+parser.add_argument('--tui', type=int, default=1) # target update interval
 parser.add_argument('--min_y', type=int, default=0)
 parser.add_argument('--vf_reg', type=float, default=0.)
 parser.add_argument('--vf_reg_decay', type=float, default=1.)
@@ -46,6 +47,7 @@ main_dir = args.log_dir\
             +(('lr'+str(args.lr)) if args.lr else '')\
             +(('bs'+str(args.bs)) if args.bs else '')\
             +(('cg'+str(args.cg)) if args.cg else '')\
+            +(('tui'+str(args.tui)) if args.tui>1 else '')\
             +('min_y' if args.min_y==1 else '')\
             +(('vf_reg'+str(args.vf_reg)\
                 +(('order'+str(args.vf_reg_order)) 
@@ -79,6 +81,7 @@ with open(args.exp_name+'_gaussian_variant.json','r') as in_json:
     variants['seed'] = seed
     variants["algorithm_params"]["base_kwargs"]["n_epochs"] = args.epoch+1
     variants["algorithm_params"]["clip_gradient"] = args.cg
+    variants["algorithm_params"]['target_update_interval'] = args.tui
     variants["algorithm_params"]["min_y"] = (args.min_y==1)
     variants["algorithm_params"]["vf_reg"] = args.vf_reg
     variants["algorithm_params"]["vf_reg_decay"] = args.vf_reg_decay
