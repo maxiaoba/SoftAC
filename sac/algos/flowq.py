@@ -31,6 +31,7 @@ class FlowQ(RLAlgorithm, Serializable):
             vf_reg=0.0,
             vf_reg_decay=1.0,
             vf_reg_min=0.0,
+            vf_reg_order=1,
             discount=0.99,
             tau=0.01,
             target_update_interval=1,
@@ -86,6 +87,7 @@ class FlowQ(RLAlgorithm, Serializable):
         self._vf_reg = vf_reg
         self._vf_reg_decay = vf_reg_decay
         self._vf_reg_min = vf_reg_min
+        self._vf_reg_order = vf_reg_order
         self._discount = discount
         self._tau = tau
         self._target_update_interval = target_update_interval
@@ -228,7 +230,10 @@ class FlowQ(RLAlgorithm, Serializable):
         policy_loss = (td_loss
                        + policy_regularization_loss)
 
-        self._vf_reg_loss = tf.reduce_mean(tf.abs(self._vf_t))
+        if self._vf_reg_order == 1:
+            self._vf_reg_loss = tf.reduce_mean(tf.abs(self._vf_t))
+        elif self._vf_reg_order == 2:
+            self._vf_reg_loss = tf.reduce_mean(tf.square(self._vf_t))
         self._vf_loss_t = td_loss + self._vf_reg_ph * self._vf_reg_loss
 
         p_optimizer = tf.train.AdamOptimizer(self._policy_lr, name="PolicyOptimizer")
@@ -240,6 +245,7 @@ class FlowQ(RLAlgorithm, Serializable):
             p_grad_norm = tf.global_norm(p_grads)
         else:
             p_clipped_grads, p_grad_norm = tf.clip_by_global_norm(p_grads, self._clip_gradient)
+            p_grad_norm = tf.global_norm(p_clipped_grads)
         policy_train_op = p_optimizer.apply_gradients(zip(p_clipped_grads, p_variables))
         self._p_grad_norm = p_grad_norm
 
@@ -252,6 +258,7 @@ class FlowQ(RLAlgorithm, Serializable):
             v_grad_norm = tf.global_norm(v_grads)
         else:
             v_clipped_grads, v_grad_norm = tf.clip_by_global_norm(v_grads, self._clip_gradient)
+            v_grad_norm = tf.global_norm(v_clipped_grads)
         vf_train_op = v_optimizer.apply_gradients(zip(v_clipped_grads, v_variables))
         self._v_grad_norm = v_grad_norm
 
@@ -289,7 +296,7 @@ class FlowQ(RLAlgorithm, Serializable):
 
     def _get_feed_dict(self, iteration, batch):
         """Construct TensorFlow feed_dict from sample batch."""
-        
+
         feed_dict = {
             self._observations_ph: batch['observations'],
             self._actions_ph: batch['actions'],

@@ -5,7 +5,7 @@ matplotlib.rcParams.update({'font.size': 10})
 from matplotlib import pyplot as plt
 import numpy as np
 
-itr_interval = 100
+itr_interval = 10
 max_itr = 2e4
 
 fields = [
@@ -22,23 +22,24 @@ exp_name = \
 # "HalfCheetah"
 # "Hopper"
 # "Ant"
-# "Walker2D"
-    
-    
+# "Walker2d"
+
 prepath = "./Data/"+exp_name
 plot_path = "./Data/"+exp_name
 
 policies = [
             'SAC_Gaussian',
-            'FlowQ5_Gaussian',
-            'FlowQ5_Gaussiancg1.0vf_reg1.0',
+            # 'FlowQ_Gaussiancg1.0vf_reg1.0',
+            'SAC_Gaussiannmob',
+            'FlowQ_Gaussiannmobcg1.0',
+            'FlowQ_Gaussiannmobcg1.0vf_reg1.0',
         ]
 policy_names = policies
 colors = []
 for pid in range(len(policies)):
     colors.append('C'+str(pid))
 
-extra_name = 'FlowQ5'
+extra_name = 'FlowQ'
 
 pre_name = ''
 post_name = ''

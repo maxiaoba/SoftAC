@@ -7,14 +7,11 @@ parser.add_argument('--exp_name', type=str, default='Ant')
 parser.add_argument('--ml', type=int, default=200)
 args = parser.parse_args()
 
-import pybullet_envs
-import gym
-from sac.envs.rllab_env import RLLabEnv
-env = gym.make(args.exp_name+'BulletEnv-v0')
-env.seed(0)
+from sac.envs import GymEnv
+env = GymEnv(args.exp_name+'-v1')
 env.render('human')
 env.reset()
-
+# print(env.observation_space.high)
 max_path_length = args.ml
 path_length = 0
 done = False
@@ -24,9 +21,9 @@ while (path_length < max_path_length) and (not done):
 	a = env.action_space.sample()
 	o, r, done, _ = env.step(a)
 	c_r += r
-	# env.render()
+	env.render()
 	print("step: ",path_length)
-	print("o: ",o)
+	print("o: ",np.max(o))
 	print("a: ",a)
 	print('r: ',r)
 	print(done)

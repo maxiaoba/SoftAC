@@ -8,7 +8,7 @@ from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import VariantGenerator
 from rllab import config
 
-from sac.algos.flowq import FlowQ
+from sac.algos.flowq4 import FlowQ
 
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp, unflatten
@@ -22,7 +22,7 @@ from examples.variants import parse_domain_and_task, get_variants
 parser = argparse.ArgumentParser()
 parser.add_argument('--exp_name', type=str, default='Hopper')
 parser.add_argument('--nmob', type=int, default=0) # nomalize ob in env
-parser.add_argument('--log_dir', type=str, default='FlowQ_Gaussian')
+parser.add_argument('--log_dir', type=str, default='FlowQ4_Gaussian')
 parser.add_argument('--lr', type=float, default=None)
 parser.add_argument('--bs', type=int, default=None)
 parser.add_argument('--cg', type=float, default=None)
@@ -79,11 +79,11 @@ with open(args.exp_name+'_gaussian_variant.json','r') as in_json:
     variants['seed'] = seed
     variants["algorithm_params"]["base_kwargs"]["n_epochs"] = args.epoch+1
     variants["algorithm_params"]["clip_gradient"] = args.cg
-    variants["algorithm_params"]["min_y"] = (args.min_y==1)
+    # variants["algorithm_params"]["min_y"] = (args.min_y==1)
     variants["algorithm_params"]["vf_reg"] = args.vf_reg
     variants["algorithm_params"]["vf_reg_decay"] = args.vf_reg_decay
     variants["algorithm_params"]["vf_reg_min"] = args.vf_reg_min
-    variants["algorithm_params"]["vf_reg_order"] = args.vf_reg_order
+    # variants["algorithm_params"]["vf_reg_order"] = args.vf_reg_order
 
 if args.lr:
     variants['algorithm_params']['lr'] = args.lr
@@ -133,11 +133,11 @@ algorithm = FlowQ(
     lr=algorithm_params['lr'],
     clip_gradient=algorithm_params["clip_gradient"],
     scale_reward=algorithm_params['scale_reward'],
-    min_y=algorithm_params['min_y'],
+    # min_y=algorithm_params['min_y'],
     vf_reg=algorithm_params['vf_reg'],
     vf_reg_decay=algorithm_params['vf_reg_decay'],
     vf_reg_min=algorithm_params['vf_reg_min'],
-    vf_reg_order=algorithm_params['vf_reg_order'],
+    # vf_reg_order=algorithm_params['vf_reg_order'],
     discount=algorithm_params['discount'],
     tau=algorithm_params['tau'],
     reparameterize=policy_params['reparameterize'],
