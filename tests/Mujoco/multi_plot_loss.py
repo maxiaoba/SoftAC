@@ -20,9 +20,9 @@ max_loss = [np.inf,np.inf,np.inf,np.inf,np.inf]
 exp_name = \
 "Humanoid"
 # "HalfCheetah"
-# "Hopper"
-# "Ant"
 # "Walker2d"
+# "Ant"
+# "Hopper"
 
 prepath = "./Data/"+exp_name
 plot_path = "./Data/"+exp_name
@@ -30,9 +30,11 @@ plot_path = "./Data/"+exp_name
 policies = [
             'SAC_Gaussian',
             # 'FlowQ_Gaussiancg1.0vf_reg1.0',
-            'SAC_Gaussiannmob',
-            'FlowQ_Gaussiannmobcg1.0',
+            # 'FlowQ_Gaussiancg1.0tui10vf_reg1.0',
+            # 'FlowQ4_Gaussiancg1.0vf_reg1.0',
             'FlowQ_Gaussiannmobcg1.0vf_reg1.0',
+            'FlowQ_Gaussiannmobcg1.0tui10vf_reg1.0',
+            'FlowQ4_Gaussiannmobcg1.0vf_reg1.0',
         ]
 policy_names = policies
 colors = []
