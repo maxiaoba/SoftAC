@@ -12,7 +12,7 @@ from .base import RLAlgorithm
 from qj import qj
 
 class FlowQ(RLAlgorithm, Serializable):
-    # use tarrget v in policy loss
+    # use min over 2 target v in loss
     def __init__(
             self,
             base_kwargs,
@@ -20,7 +20,8 @@ class FlowQ(RLAlgorithm, Serializable):
             env,
             policy,
             initial_exploration_policy,
-            vf,
+            vf1,
+            vf2,
             pool,
             plotter=None,
 
@@ -31,6 +32,7 @@ class FlowQ(RLAlgorithm, Serializable):
             vf_reg=0.0,
             vf_reg_decay=1.0,
             vf_reg_min=0.0,
+            vf_reg_order=1,
             discount=0.99,
             tau=0.01,
             target_update_interval=1,
@@ -49,7 +51,8 @@ class FlowQ(RLAlgorithm, Serializable):
             initial_exploration_policy: ('Policy'): A policy that we use
                 for initial exploration which is not trained by the algorithm.
 
-            vf (`ValueFunction`): Soft value function approximator.
+            vf1 (`ValueFunction1`): First soft value function approximator.
+            vf2 (`ValueFunction2`): Second soft value function approximator.
 
             pool (`PoolBase`): Replay buffer to add gathered samples to.
             plotter (`QFPolicyPlotter`): Plotter instance to be used for
@@ -74,7 +77,8 @@ class FlowQ(RLAlgorithm, Serializable):
         self._env = env
         self._policy = policy
         self._initial_exploration_policy = initial_exploration_policy
-        self._vf = vf
+        self._vf1 = vf1
+        self._vf2 = vf2
         self._pool = pool
         self._plotter = plotter
 
@@ -86,6 +90,7 @@ class FlowQ(RLAlgorithm, Serializable):
         self._vf_reg = vf_reg
         self._vf_reg_decay = vf_reg_decay
         self._vf_reg_min = vf_reg_min
+        self._vf_reg_order = vf_reg_order
         self._discount = discount
         self._tau = tau
         self._target_update_interval = target_update_interval
@@ -190,23 +195,40 @@ class FlowQ(RLAlgorithm, Serializable):
 
     def _init_train_update(self):
 
-        with tf.variable_scope('target'):
-            vf_next_target_t = self._vf.get_output_for(self._next_observations_ph)  # N
-            vf_target_t = self._vf.get_output_for(self._observations_ph, reuse=True)  # N
-            self._vf_target_params = self._vf.get_params_internal()
+        with tf.variable_scope('target1'):
+            vf1_next_target_t = self._vf1.get_output_for(self._next_observations_ph)  # N
+            self._vf1_target_params = self._vf1.get_params_internal()
+            self._vf1_next_target_t = vf1_next_target_t
 
-        ys = tf.stop_gradient(
+        y1s = tf.stop_gradient(
             self.scale_reward * self._rewards_ph +
-            (1 - self._terminals_ph) * self._discount * vf_next_target_t
+            (1 - self._terminals_ph) * self._discount * vf1_next_target_t
         )  # N
+        self._y1s = y1s
+
+        with tf.variable_scope('target2'):
+            vf2_next_target_t = self._vf2.get_output_for(self._next_observations_ph)  # N
+            self._vf2_target_params = self._vf2.get_params_internal()
+            self._vf2_next_target_t = vf2_next_target_t
+
+        y2s = tf.stop_gradient(
+            self.scale_reward * self._rewards_ph +
+            (1 - self._terminals_ph) * self._discount * vf2_next_target_t
+        )  # N
+        self._y2s = y2s
+
+        ys = tf.minimum(y1s, y2s)
 
         if self._policy._squash:
             log_pi = self._policy.log_pis_for(self._observations_ph,self._raw_actions_ph)
         else:
             log_pi = self._policy.log_pis_for(self._observations_ph,self._actions_ph)
 
-        self._vf_t = self._vf.get_output_for(self._observations_ph, reuse=True)  # N
-        self._vf_params = self._vf.get_params_internal()
+        self._vf1_t = self._vf1.get_output_for(self._observations_ph, reuse=True)  # N
+        self._vf1_params = self._vf1.get_params_internal()
+
+        self._vf2_t = self._vf2.get_output_for(self._observations_ph, reuse=True)  # N
+        self._vf2_params = self._vf2.get_params_internal()
 
         policy_regularization_losses = tf.get_collection(
             tf.GraphKeys.REGULARIZATION_LOSSES,
@@ -214,15 +236,23 @@ class FlowQ(RLAlgorithm, Serializable):
         policy_regularization_loss = tf.reduce_sum(
             policy_regularization_losses)
 
-        td_loss = tf.reduce_mean(tf.squared_difference(ys,vf_target_t+log_pi))
-        self._td_loss = td_loss
-        policy_loss = (td_loss
-                       + policy_regularization_loss)
+        td_loss1 = tf.reduce_mean(tf.squared_difference(ys,self._vf1_t + log_pi))
+        self._td_loss1 = td_loss1
+        if self._vf_reg_order == 1:
+            self._vf1_reg_loss = tf.reduce_mean(tf.abs(self._vf1_t))
+        elif self._vf_reg_order == 2:
+            self._vf1_reg_loss = tf.reduce_mean(tf.square(self._vf1_t))
+        self._vf1_loss_t = td_loss1 + self._vf_reg_ph * self._vf1_reg_loss
 
-        td_loss2 = tf.reduce_mean(tf.squared_difference(ys,self._vf_t+log_pi))
-        self._td_loss2 = td_loss2
-        self._vf_reg_loss = tf.reduce_mean(tf.abs(self._vf_t))
-        self._vf_loss_t = td_loss2 + self._vf_reg_ph * self._vf_reg_loss
+        td_loss2 = tf.reduce_mean(tf.squared_difference(ys,self._vf2_t+log_pi))
+        self._td_loss2 = td_loss2 
+        if self._vf_reg_order == 1:
+            self._vf2_reg_loss = tf.reduce_mean(tf.abs(self._vf2_t))
+        elif self._vf_reg_order == 2:
+            self._vf2_reg_loss = tf.reduce_mean(tf.square(self._vf2_t))
+        self._vf2_loss_t = td_loss2 + self._vf_reg_ph * self._vf2_reg_loss
+
+        policy_loss = (td_loss1 + policy_regularization_loss)
 
         p_optimizer = tf.train.AdamOptimizer(self._policy_lr, name="PolicyOptimizer")
         p_gvs = p_optimizer.compute_gradients(policy_loss,var_list=self._policy.get_params_internal())
@@ -233,29 +263,45 @@ class FlowQ(RLAlgorithm, Serializable):
             p_grad_norm = tf.global_norm(p_grads)
         else:
             p_clipped_grads, p_grad_norm = tf.clip_by_global_norm(p_grads, self._clip_gradient)
+            # p_grad_norm = tf.global_norm(p_clipped_grads)
         policy_train_op = p_optimizer.apply_gradients(zip(p_clipped_grads, p_variables))
         self._p_grad_norm = p_grad_norm
 
-        v_optimizer = tf.train.AdamOptimizer(self._vf_lr, name="VfOptimizer")
-        v_gvs = v_optimizer.compute_gradients(self._vf_loss_t,var_list=self._vf_params)
-        v_grads = [x[0] for x in v_gvs]
-        v_variables = [x[1] for x in v_gvs]
+        v1_optimizer = tf.train.AdamOptimizer(self._vf_lr, name="VfOptimizer1")
+        v1_gvs = v1_optimizer.compute_gradients(self._vf1_loss_t,var_list=self._vf1_params)
+        v1_grads = [x[0] for x in v1_gvs]
+        v1_variables = [x[1] for x in v1_gvs]
         if self._clip_gradient is None:
-            v_clipped_grads = v_grads
-            v_grad_norm = tf.global_norm(v_grads)
+            v1_clipped_grads = v1_grads
+            v1_grad_norm = tf.global_norm(v1_grads)
         else:
-            v_clipped_grads, v_grad_norm = tf.clip_by_global_norm(v_grads, self._clip_gradient)
-        vf_train_op = v_optimizer.apply_gradients(zip(v_clipped_grads, v_variables))
-        self._v_grad_norm = v_grad_norm
+            v1_clipped_grads, v1_grad_norm = tf.clip_by_global_norm(v1_grads, self._clip_gradient)
+            # v_grad_norm = tf.global_norm(v_clipped_grads)
+        vf1_train_op = v1_optimizer.apply_gradients(zip(v1_clipped_grads, v1_variables))
+        self._v1_grad_norm = v1_grad_norm
+
+        v2_optimizer = tf.train.AdamOptimizer(self._vf_lr, name="VfOptimizer2")
+        v2_gvs = v2_optimizer.compute_gradients(self._vf2_loss_t,var_list=self._vf2_params)
+        v2_grads = [x[0] for x in v2_gvs]
+        v2_variables = [x[1] for x in v2_gvs]
+        if self._clip_gradient is None:
+            v2_clipped_grads = v2_grads
+            v2_grad_norm = tf.global_norm(v2_grads)
+        else:
+            v2_clipped_grads, v2_grad_norm = tf.clip_by_global_norm(v2_grads, self._clip_gradient)
+            # v_grad_norm = tf.global_norm(v_clipped_grads)
+        vf2_train_op = v2_optimizer.apply_gradients(zip(v2_clipped_grads, v2_variables))
+        self._v2_grad_norm = v2_grad_norm
 
         self._training_ops.append(policy_train_op)
-        self._training_ops.append(vf_train_op)
+        self._training_ops.append(vf1_train_op)
+        self._training_ops.append(vf2_train_op)
 
     def _init_target_ops(self):
         """Create tensorflow operations for updating target value function."""
 
-        source_params = self._vf_params
-        target_params = self._vf_target_params
+        source_params = self._vf1_params + self._vf2_params
+        target_params = self._vf1_target_params + self._vf2_target_params
 
         self._target_ops = [
             tf.assign(target, (1 - self._tau) * target + self._tau * source)
@@ -311,19 +357,39 @@ class FlowQ(RLAlgorithm, Serializable):
         """
 
         feed_dict = self._get_feed_dict(iteration, batch)
-        vf, td_loss, td_loss2, vf_reg_loss, p_grad_norm, v_grad_norm = self._sess.run(
-            (self._vf_t, self._td_loss, self._td_loss2,
-            self._vf_reg_loss, self._p_grad_norm, self._v_grad_norm),
+        vf1, vf1_target, y1, td_loss1, vf1_reg_loss, v1_grad_norm,\
+        vf2, vf2_target, y2, td_loss2, vf2_reg_loss, v2_grad_norm,\
+        p_grad_norm \
+         = self._sess.run((
+            self._vf1_t, self._vf1_next_target_t, self._y1s, self._td_loss1,
+                self._vf1_reg_loss, self._v1_grad_norm,
+            self._vf2_t, self._vf2_next_target_t, self._y2s, self._td_loss2,
+                self._vf2_reg_loss, self._v2_grad_norm,
+            self._p_grad_norm),
             feed_dict)
 
-        logger.record_tabular('vf-avg', np.mean(vf))
-        logger.record_tabular('vf-std', np.std(vf))
-        logger.record_tabular('vf-grad-norm', v_grad_norm)
-        logger.record_tabular('vf-reg-loss', vf_reg_loss)
+        logger.record_tabular('vf1-avg', np.mean(vf1))
+        logger.record_tabular('vf1-std', np.std(vf1))
+        logger.record_tabular('vf1-grad-norm', v1_grad_norm)
+        logger.record_tabular('vf1-reg-loss', vf1_reg_loss)
+        logger.record_tabular('mean-sq-bellman-error1', td_loss1)
+        logger.record_tabular('vf1-target-avg', np.mean(vf1_target))
+        logger.record_tabular('vf1-target-std', np.std(vf1_target))
+        logger.record_tabular('y1-avg', np.mean(vf1_target))
+        logger.record_tabular('y1-std', np.std(vf1_target))
+
+        logger.record_tabular('vf2-avg', np.mean(vf2))
+        logger.record_tabular('vf2-std', np.std(vf2))
+        logger.record_tabular('vf2-grad-norm', v2_grad_norm)
+        logger.record_tabular('vf2-reg-loss', vf2_reg_loss)
+        logger.record_tabular('mean-sq-bellman-error2', td_loss2)
+        logger.record_tabular('vf2-target-avg', np.mean(vf2_target))
+        logger.record_tabular('vf2-target-std', np.std(vf2_target))
+        logger.record_tabular('y2-avg', np.mean(vf2_target))
+        logger.record_tabular('y2-std', np.std(vf2_target))
+
         logger.record_tabular('vf-reg-weight', self._vf_reg)
         logger.record_tabular('p-grad-norm', p_grad_norm)
-        logger.record_tabular('mean-sq-bellman-error1', td_loss)
-        logger.record_tabular('mean-sq-bellman-error2', td_loss2)
 
         self._policy.log_diagnostics(iteration, batch)
         if self._plotter:
@@ -347,7 +413,8 @@ class FlowQ(RLAlgorithm, Serializable):
             snapshot = {
                 'epoch': epoch,
                 'policy': self._policy,
-                'vf': self._vf,
+                'vf1': self._vf1,
+                'vf2': self._vf2,
                 'env': self._env,
                 'vf_reg': self._vf_reg,
             }
@@ -359,7 +426,8 @@ class FlowQ(RLAlgorithm, Serializable):
 
         d = Serializable.__getstate__(self)
         d.update({
-            'vf-params': self._vf.get_param_values(),
+            'vf1-params': self._vf1.get_param_values(),
+            'vf2-params': self._vf2.get_param_values(),
             'policy-params': self._policy.get_param_values(),
             'pool': self._pool.__getstate__(),
             'env': self._env.__getstate__(),
@@ -371,7 +439,8 @@ class FlowQ(RLAlgorithm, Serializable):
         """Set Serializable state fo the RLAlgorithm instance."""
 
         Serializable.__setstate__(self, d)
-        self._vf.set_param_values(d['vf-params'])
+        self._vf1.set_param_values(d['vf1-params'])
+        self._vf2.set_param_values(d['vf2-params'])
         self._policy.set_param_values(d['policy-params'])
         self._pool.__setstate__(d['pool'])
         self._env.__setstate__(d['env'])
