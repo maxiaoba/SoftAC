@@ -16,6 +16,7 @@ from sac.policies import UniformPolicy
 from sac.policies.gaussian_policy_0 import GaussianPolicy
 from sac.misc.sampler import SimpleSampler
 from sac.replay_buffers import SimpleReplayBuffer
+from sac.replay_buffers.normalize_replay_buffer import NormalizeReplayBuffer
 from sac.value_functions import NNQFunction, NNVFunction
 from sac.preprocessors import MLPPreprocessor
 from examples.variants import parse_domain_and_task, get_variants
@@ -75,12 +76,20 @@ sampler_params = variants['sampler_params']
 with open(osp.join(log_dir,'params.json'),'w') as out_json:
     json.dump(variants,out_json,indent=2)
 
+if args.exp_name == 'HumanoidRllab':
+    from sac.envs import MultiDirectionHumanoidEnv
+    env = MultiDirectionHumanoidEnv()
+else:
+    from sac.envs import GymEnv
+    env = GymEnv(args.exp_name+'-v1')
 from rllab.envs.normalized_env import normalize
-from sac.envs import GymEnv
-env = normalize(GymEnv(args.exp_name+'-v1'),normalize_obs=(args.nmob==1))
+env = normalize(env)
 # env._wrapped_env.seed(0)
 
-pool = SimpleReplayBuffer(env_spec=env.spec, **replay_buffer_params)
+if args.nmob == 1:
+    pool = NormalizeReplayBuffer(env_spec=env.spec, **replay_buffer_params)
+else:
+    pool = SimpleReplayBuffer(env_spec=env.spec, **replay_buffer_params)
 
 sampler = SimpleSampler(**sampler_params)
 

@@ -8,14 +8,19 @@ parser.add_argument('--ml', type=int, default=200)
 args = parser.parse_args()
 
 from sac.envs import GymEnv
-env = GymEnv(args.exp_name+'-v1')
-env.render('human')
-env.reset()
+if args.exp_name == 'HumanoidRllab':
+	from sac.envs import MultiDirectionHumanoidEnv
+	env = MultiDirectionHumanoidEnv()
+else:
+	env = GymEnv(args.exp_name+'-v1')
+	env.render('human')
+o = env.reset()
 # print(env.observation_space.high)
 max_path_length = args.ml
 path_length = 0
 done = False
 c_r = 0.0
+
 while (path_length < max_path_length) and (not done):
 	path_length += 1
 	a = env.action_space.sample()
@@ -23,7 +28,8 @@ while (path_length < max_path_length) and (not done):
 	c_r += r
 	env.render()
 	print("step: ",path_length)
-	print("o: ",np.max(o))
+	print("o_max: ",np.max(o),np.argmax(o))
+	print("o_mean: ",np.mean(o))
 	print("a: ",a)
 	print('r: ',r)
 	print(done)

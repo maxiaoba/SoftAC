@@ -10,6 +10,7 @@ from sac.core.serializable import deep_clone
 from sac.misc import tf_utils
 from sac.misc.sampler import rollouts
 
+from sac.replay_buffers.normalize_replay_buffer import NormalizeReplayBuffer
 
 class RLAlgorithm(Algorithm):
     """Abstract RLAlgorithm.
@@ -141,9 +142,14 @@ class RLAlgorithm(Algorithm):
             return
 
         with self._policy.deterministic(self._eval_deterministic):
-            paths = rollouts(self._eval_env, self._policy,
-                             self.sampler._max_path_length, self._eval_n_episodes,
-                            )
+            if isinstance(self._pool, NormalizeReplayBuffer):
+                paths = self._pool.rollouts(self._eval_env, self._policy,
+                                 self.sampler._max_path_length, self._eval_n_episodes,
+                                )
+            else:
+                paths = rollouts(self._eval_env, self._policy,
+                                 self.sampler._max_path_length, self._eval_n_episodes,
+                                )
 
         total_returns = [path['rewards'].sum() for path in paths]
         episode_lengths = [len(p['rewards']) for p in paths]

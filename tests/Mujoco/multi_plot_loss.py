@@ -17,26 +17,26 @@ fields = [
 itr_name = 'epoch'
 min_loss = [-np.inf,-np.inf,-np.inf,-np.inf,-np.inf]
 max_loss = [np.inf,np.inf,np.inf,np.inf,np.inf]
-exp_name = ["Hopper","Ant","Walker2d","HalfCheetah","Humanoid"][2]
+exp_name = ["Hopper","Ant","Walker2d","HalfCheetah","Humanoid",
+            "HumanoidRllab"][5]
 
 prepath = "./Data/"+exp_name
 plot_path = "./Data/"+exp_name
 
 policies = [
-            'SAC_Gaussian',
+            # 'SAC_Gaussian',
             # 'SAC2_Gaussian',
-            # 'FlowQ_Gaussiancg1.0vf_reg1.0',
+            'FlowQ_Gaussiancg1.0vf_reg1.0',
             # 'FlowQ_Gaussiancg1.0tui10vf_reg1.0',
             # 'FlowQ4_Gaussiancg1.0vf_reg1.0',
-            'FlowQ_Gaussiancg1.0vf_reg0.1order2',
-            'FlowQ_Gaussiancg1.0vf_reg0.01order2',
+            # 'FlowQ6_Gaussiancg1.0',
         ]
 policy_names = policies
 colors = []
 for pid in range(len(policies)):
     colors.append('C'+str(pid))
 
-extra_name = 'vf_regorder2'
+extra_name = 'SAC'
 
 pre_name = ''
 post_name = ''

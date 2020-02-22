@@ -228,9 +228,9 @@ class FlowQ(RLAlgorithm, Serializable):
         q_vpi = self._vf_t + log_pi
 
         td_loss = tf.reduce_mean(tf.squared_difference(ys,q_vpi))
+
         self._td_loss = td_loss
-        policy_loss = (td_loss
-                       + policy_regularization_loss)
+        policy_loss = (td_loss + policy_regularization_loss)
 
         if self._vf_reg_order == 1:
             self._vf_reg_loss = tf.reduce_mean(tf.abs(self._vf_t))
@@ -298,7 +298,6 @@ class FlowQ(RLAlgorithm, Serializable):
 
     def _get_feed_dict(self, iteration, batch):
         """Construct TensorFlow feed_dict from sample batch."""
-
         feed_dict = {
             self._observations_ph: batch['observations'],
             self._actions_ph: batch['actions'],
