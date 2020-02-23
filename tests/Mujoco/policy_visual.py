@@ -20,13 +20,13 @@ with tf.Session() as sess:
     data_path = osp.join(log_dir,'itr_'+str(args.itr)+'.pkl')
     data = joblib.load(data_path)
 
-    from rllab.envs.normalized_env import normalize
-    from sac.envs.rllab_env import RLLabEnv
-    import pybullet_envs
-    import gym
-    env = normalize(RLLabEnv(gym.make(args.exp_name+'BulletEnv-v0')))
-    env.render('human')
-    env.seed(args.seed)
+    from sac.envs import GymEnv
+    if args.exp_name == 'HumanoidRllab':
+        from sac.envs import MultiDirectionHumanoidEnv
+        env = MultiDirectionHumanoidEnv()
+    else:
+        env = GymEnv(args.exp_name+'-v1')
+        env.render('human')
 
     o = env.reset()
     policy = data['policy']
