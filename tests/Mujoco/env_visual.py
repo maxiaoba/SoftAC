@@ -11,6 +11,9 @@ from sac.envs import GymEnv
 if args.exp_name == 'HumanoidRllab':
 	from sac.envs import MultiDirectionHumanoidEnv
 	env = MultiDirectionHumanoidEnv()
+elif args.exp_name == "SwimmerRllab":
+	from sac.envs import MultiDirectionSwimmerEnv
+	env = MultiDirectionSwimmerEnv()
 else:
 	env = GymEnv(args.exp_name+'-v1')
 	env.render('human')

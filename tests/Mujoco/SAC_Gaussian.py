@@ -80,11 +80,14 @@ sampler_params = variants['sampler_params']
 with open(osp.join(log_dir,'params.json'),'w') as out_json:
     json.dump(variants,out_json,indent=2)
 
+from sac.envs import GymEnv
 if args.exp_name == 'HumanoidRllab':
     from sac.envs import MultiDirectionHumanoidEnv
     env = MultiDirectionHumanoidEnv()
+elif args.exp_name == "SwimmerRllab":
+    from sac.envs import MultiDirectionSwimmerEnv
+    env = MultiDirectionSwimmerEnv()
 else:
-    from sac.envs import GymEnv
     env = GymEnv(args.exp_name+'-v1')
 from rllab.envs.normalized_env import normalize
 env = normalize(env)
