@@ -26,6 +26,7 @@ parser.add_argument('--exp_name', type=str, default='Hopper')
 parser.add_argument('--nmob', type=int, default=0) # nomalize ob
 parser.add_argument('--log_dir', type=str, default='SAC_Gaussian')
 parser.add_argument('--lr', type=float, default=None)
+parser.add_argument('--sr', type=float, default=None)
 parser.add_argument('--epoch', type=int, default=3000)
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--args_data', type=str, default=None)
@@ -38,7 +39,8 @@ import os.path as osp
 pre_dir = './Data/'+args.exp_name
 main_dir = args.log_dir\
             +('nmob' if args.nmob==1 else '')\
-            +(('lr'+str(args.lr)) if args.lr else '')
+            +(('lr'+str(args.lr)) if args.lr else '')\
+            +(('sr'+str(args.sr)) if args.sr else '')
 log_dir = osp.join(pre_dir,main_dir,'seed'+str(args.seed))
 
 seed = args.seed
@@ -67,6 +69,8 @@ with open(args.exp_name+'_gaussian_variant.json','r') as in_json:
 
 if args.lr:
     variants['algorithm_params']['lr'] = args.lr
+if args.sr:
+    variants['algorithm_params']["scale_reward"] = args.sr
 policy_params = variants['policy_params']
 value_fn_params = variants['value_fn_params']
 algorithm_params = variants['algorithm_params']

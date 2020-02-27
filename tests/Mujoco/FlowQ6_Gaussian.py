@@ -24,6 +24,7 @@ parser.add_argument('--exp_name', type=str, default='Hopper')
 parser.add_argument('--nmob', type=int, default=0) # nomalize ob in env
 parser.add_argument('--log_dir', type=str, default='FlowQ6_Gaussian')
 parser.add_argument('--lr', type=float, default=None)
+parser.add_argument('--sr', type=float, default=None)
 parser.add_argument('--bs', type=int, default=None)
 parser.add_argument('--cg', type=float, default=None)
 parser.add_argument('--tui', type=int, default=1) # target update interval
@@ -45,6 +46,7 @@ pre_dir = './Data/'+args.exp_name
 main_dir = args.log_dir\
             +('nmob' if args.nmob==1 else '')\
             +(('lr'+str(args.lr)) if args.lr else '')\
+            +(('sr'+str(args.sr)) if args.sr else '')\
             +(('bs'+str(args.bs)) if args.bs else '')\
             +(('cg'+str(args.cg)) if args.cg else '')\
             +(('tui'+str(args.tui)) if args.tui>1 else '')\
@@ -90,6 +92,8 @@ with open(args.exp_name+'_gaussian_variant.json','r') as in_json:
 
 if args.lr:
     variants['algorithm_params']['lr'] = args.lr
+if args.sr:
+    variants['algorithm_params']['scale_reward'] = args.sr
 if args.bs:
     variants['sampler_params']['batch_size'] = args.bs
 policy_params = variants['policy_params']
