@@ -20,28 +20,30 @@ itr_name = 'epoch'
 min_loss = [-np.inf,-np.inf,-np.inf,-np.inf,-np.inf]
 max_loss = [np.inf,np.inf,np.inf,np.inf,np.inf]
 exp_name = ["Hopper","Ant","Walker2d","HalfCheetah","Humanoid",
-            "HumanoidRllab","Swimmer","Reacher"][0]
+            "Swimmer","Reacher","SwimmerRllab","HumanoidRllab",][7]
 
 prepath = "./Data/"+exp_name
 plot_path = "./Data/"+exp_name
 
 policies = [
-            'SAC_Gaussian',
-            'SAC2_Gaussian',
-            'FlowQ_Gaussiancg1.0',
-            'FlowQ_Gaussiancg1.0vf_reg1.0',
-            'FlowQ_Gaussiancg1.0tui10vf_reg1.0',
-            'FlowQ4_Gaussiancg1.0vf_reg1.0',
-            'FlowQ6_Gaussiancg1.0',
-            # 'FlowQ6_Gaussiancg1.0vf_reg1.0',
-            # 'FlowQ6_Gaussiancg1.0tui10vf_reg1.0',
+            # 'SAC_Gaussian',
+            # 'SAC2_Gaussian',
+            # 'FlowQ_Gaussiancg1.0',
+            # 'FlowQ_Gaussiancg1.0vf_reg1.0',
+            # 'FlowQ_Gaussiancg1.0tui10vf_reg1.0',
+            # 'FlowQ4_Gaussiancg1.0vf_reg1.0',
+            # 'FlowQ6_Gaussiancg1.0',
+            'SAC_Gaussiansr25.0',
+            'SAC2_Gaussiansr25.0',
+            'FlowQ_Gaussiansr25.0cg1.0vf_reg1.0',
+            'FlowQ6_Gaussiansr25.0cg1.0',
         ]
 policy_names = policies
 colors = []
 for pid in range(len(policies)):
     colors.append('C'+str(pid))
 
-extra_name = 'FlowQ'
+extra_name = 'FlowQsr'
 
 pre_name = ''
 post_name = ''
