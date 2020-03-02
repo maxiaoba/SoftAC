@@ -3,22 +3,23 @@ import time
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--exp_name', type=str, default='Ant')
-parser.add_argument('--ml', type=int, default=1000)
+parser.add_argument('--domain', type=str, default='fish')
+parser.add_argument('--task', type=str, default='swim')
+parser.add_argument('--ml', type=int, default=200)
 args = parser.parse_args()
 
-from sac.envs import GymEnv
-if args.exp_name == 'HumanoidRllab':
-	from sac.envs import MultiDirectionHumanoidEnv
-	env = MultiDirectionHumanoidEnv()
-elif args.exp_name == "SwimmerRllab":
-	from sac.envs import MultiDirectionSwimmerEnv
-	env = MultiDirectionSwimmerEnv()
-else:
-	env = GymEnv(args.exp_name+'-v1')
-	env.render('human')
+if args.domain == 'show':
+	from dm_control import suite
+	from dm2gym import make
+	for domain_name, task_name in suite.BENCHMARKING:
+		env = make(domain_name=domain_name, task_name=task_name)
+		print(domain_name, task_name, env.observation_space, env.action_space)
+	assert False
+from dm2gym import make
+env = make(domain_name=args.domain, task_name=args.task)
 from rllab.envs.normalized_env import normalize
 env = normalize(env)
+# env.render('human')
 o = env.reset()
 # print(env.observation_space.high)
 max_path_length = args.ml
