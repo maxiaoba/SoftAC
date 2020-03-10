@@ -17,11 +17,12 @@ if args.domain == 'show':
 	assert False
 from dm2gym import make
 env = make(domain_name=args.domain, task_name=args.task)
+# print(env.action_space.high,env.action_space.low)
 from rllab.envs.normalized_env import normalize
 env = normalize(env)
-# env.render('human')
+# print(env.action_space.high,env.action_space.low)
+
 o = env.reset()
-# print(env.observation_space.high)
 max_path_length = args.ml
 path_length = 0
 done = False

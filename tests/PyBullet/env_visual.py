@@ -26,7 +26,8 @@ while (path_length < max_path_length) and (not done):
 	c_r += r
 	# env.render()
 	print("step: ",path_length)
-	print("o: ",o)
+	# print("o: ",o)
+	print("o: ",np.max(o))
 	print("a: ",a)
 	print('r: ',r)
 	print(done)

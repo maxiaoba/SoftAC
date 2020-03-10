@@ -19,29 +19,18 @@ fields = [
 itr_name = 'epoch'
 min_loss = [-np.inf,-np.inf,-np.inf,-np.inf,-np.inf]
 max_loss = [np.inf,np.inf,np.inf,np.inf,np.inf]
-exp_name = ["Hopper","Ant","Walker2d","HalfCheetah","Humanoid",
-            "Swimmer","Reacher","SwimmerRllab","HumanoidRllab",
-            "InvertedDoublePendulum"][9]
+exp_name = ["fish_swim","fish_upright","humanoid_stand"][2]
 
 prepath = "./Data/"+exp_name
 plot_path = "./Data/"+exp_name
 
 policies = [
-            'SAC_Gaussian',
-            # 'SAC2_Gaussian',
-            # 'FlowQ_Gaussiancg1.0',
-            'FlowQ_Gaussiancg1.0vf_reg1.0',
-            # 'FlowQ_Gaussiancg1.0tui10vf_reg1.0',
-            # 'FlowQ4_Gaussiancg1.0vf_reg1.0',
-            'FlowQ6_Gaussiancg1.0',
-            # 'SAC_Gaussiansr10.0',
-            # 'SAC2_Gaussiansr10.0',
-            # 'FlowQ_Gaussiansr10.0cg1.0tui10vf_reg1.0',
-            # 'FlowQ6_Gaussiansr10.0cg1.0tui10',
-            # 'FlowQ6_Gaussiansr10.0cg1.0tui10vf_reg1.0',
-            # 'FlowQ7_Gaussiansr10.0cg1.0',
-            # 'FlowQ7_Gaussiansr10.0cg1.0tui10',
-            # 'FlowQ7_Gaussiansr10.0cg1.0tui10vf_reg1.0',
+            # 'SAC_Gaussian',
+            # 'FlowQ_Gaussiancg1.0vf_reg1.0',
+            # 'FlowQ7_Gaussiancg10.0',
+            'SAC_Gaussiansr100.0',
+            'FlowQ_Gaussiansr100.0cg1.0vf_reg1.0',
+            'FlowQ7_Gaussiansr100.0cg10.0',
         ]
 policy_names = policies
 colors = []

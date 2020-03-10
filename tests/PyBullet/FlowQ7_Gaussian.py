@@ -8,7 +8,7 @@ from rllab.envs.normalized_env import normalize
 from rllab.misc.instrument import VariantGenerator
 from rllab import config
 
-from sac.algos.flowq import FlowQ
+from sac.algos.flowq7 import FlowQ
 
 from sac.misc.instrument import run_sac_experiment
 from sac.misc.utils import timestamp, unflatten
@@ -21,7 +21,7 @@ from examples.variants import parse_domain_and_task, get_variants
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--exp_name', type=str, default='Hopper')
-parser.add_argument('--log_dir', type=str, default='FlowQ_Gaussian')
+parser.add_argument('--log_dir', type=str, default='FlowQ7_Gaussian')
 parser.add_argument('--lr', type=float, default=None)
 parser.add_argument('--sr', type=float, default=None)
 parser.add_argument('--bs', type=int, default=None)
@@ -113,7 +113,8 @@ sampler = SimpleSampler(with_raw_action=True, **sampler_params)
 base_kwargs = dict(algorithm_params['base_kwargs'], sampler=sampler)
 
 M = value_fn_params['layer_size']
-vf = NNVFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
+vf1 = NNVFunction(env_spec=env.spec, hidden_layer_sizes=(M, M), name='vf1')
+vf2 = NNVFunction(env_spec=env.spec, hidden_layer_sizes=(M, M), name='vf2')
 
 initial_exploration_policy = UniformPolicy(env_spec=env.spec)
 
@@ -132,7 +133,8 @@ algorithm = FlowQ(
     policy=policy,
     initial_exploration_policy=initial_exploration_policy,
     pool=pool,
-    vf=vf,
+    vf1=vf1,
+    vf2=vf2,
     lr=algorithm_params['lr'],
     clip_gradient=algorithm_params["clip_gradient"],
     scale_reward=algorithm_params['scale_reward'],

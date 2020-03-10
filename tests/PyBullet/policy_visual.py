@@ -26,7 +26,7 @@ with tf.Session() as sess:
     import gym
     env = normalize(RLLabEnv(gym.make(args.exp_name+'BulletEnv-v0')))
     env.render('human')
-    env.seed(args.seed)
+    # env.seed(args.seed)
 
     o = env.reset()
     policy = data['policy']
@@ -47,7 +47,8 @@ with tf.Session() as sess:
         c_r += r
         env.render()
         print("step: ",path_length)
-        print("o: ",o)
+        # print("o: ",o)
+        print("o: ",np.max(o))
         print("a: ",a)
         print('r: ',r)
         print(done)
