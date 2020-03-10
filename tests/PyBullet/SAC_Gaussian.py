@@ -37,7 +37,7 @@ import os.path as osp
 pre_dir = './Data/'+args.exp_name
 main_dir = args.log_dir\
             +(('lr'+str(args.lr)) if args.lr else '')\
-            +(('sr'+str(args.sr)) if args.sr else '')\
+            +(('sr'+str(args.sr)) if args.sr else '')
 log_dir = osp.join(pre_dir,main_dir,'seed'+str(args.seed))
 
 seed = args.seed
