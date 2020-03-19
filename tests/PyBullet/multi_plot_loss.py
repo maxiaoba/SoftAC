@@ -10,9 +10,9 @@ max_itr = 2e4
 
 fields = [
             'return-average',
-            'vf-avg',
-            'log-pi-mean',
-            'mean-sq-bellman-error1',
+            # 'vf-avg',
+            # 'log-pi-mean',
+            # 'mean-sq-bellman-error1',
             ]
 itr_name = 'epoch'
 min_loss = [-np.inf,-np.inf,-np.inf,-np.inf,-np.inf]
@@ -30,15 +30,16 @@ plot_path = "./Data/"+exp_name
 
 policies = [
             'SAC_Gaussian',
-            'FlowQ5_Gaussian',
-            'FlowQ5_Gaussiancg1.0vf_reg1.0',
+            'FlowQ7_Gaussiancg10.0',
+            'SAC_Gaussiansr10.0',
+            'FlowQ7_Gaussiansr10.0cg10.0',
         ]
 policy_names = policies
 colors = []
 for pid in range(len(policies)):
     colors.append('C'+str(pid))
 
-extra_name = 'FlowQ5'
+extra_name = 'FlowQ7'
 
 pre_name = ''
 post_name = ''
@@ -55,7 +56,7 @@ for fid,field in enumerate(fields):
         Itrs = []
         Losses = []
         min_itr = np.inf
-        for trial in range(3):
+        for trial in [2]:#range(3):
             file_path = prepath+'/'+policy_path+'/'+'seed'+str(trial)+'/process.csv'
             print(file_path)
             if os.path.exists(file_path):
